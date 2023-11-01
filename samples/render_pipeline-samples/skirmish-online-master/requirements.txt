@@ -1,0 +1,13 @@
+# app dependencies
+panda3d
+panda3d-gltf
+pygltflib
+panda3d-simplepbr
+redis
+sqlalchemy
+psycopg2 --no-binary psycopg2
+pandas
+
+# development dependencies
+mypy
+black

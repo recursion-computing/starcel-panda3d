@@ -1,0 +1,4 @@
+panda3d
+panda3d-gltf
+pygltflib
+panda3d-simplepbr

@@ -1,0 +1,10 @@
+<rml>
+    <head>
+        <link type="text/css" href="./main.rcss" />
+        <title>libRocket GUI</title>
+    </head>
+    <body>
+	    <div id="MainContainer" class="main">Your menus here</div>
+    </body>
+</rml>
+

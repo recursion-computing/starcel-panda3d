@@ -1,0 +1,37 @@
+version: '3'
+
+networks:
+  skirmish-online:
+    driver: bridge
+
+services:
+  # database:
+  #   restart: unless-stopped
+  #   image: centos/postgresql-96-centos7
+  #   networks:
+  #   - skirmish-online
+  #   environment:
+  #     - POSTGRESQL_USER=postgres
+  #     - POSTGRESQL_DATABASE=db
+  #     - POSTGRESQL_PASSWORD=passw0rd
+
+  redis:
+    restart: unless-stopped
+    image: redis
+    networks:
+    - skirmish-online
+    ports:
+      - 6379:6379
+
+  server:
+    restart: unless-stopped
+    image: skirmish-online/server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+    - skirmish-online
+    volumes:
+      - .:/opt/skirmish
+    ports:
+      - 15000:15000
