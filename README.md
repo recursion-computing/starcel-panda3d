@@ -12,7 +12,7 @@ fast-autocomplete, rapidfuzz,\
 panda3d, [renderpipeline](https://github.com/tobspr/RenderPipeline), ursina,\
 xarray, numpy, pandas, h5py, pytensor, cupy(awaiting update), cupy_xarray(awaiting update),\
 scipy, opencv, scikit-learn, sympy, mpmath, sagemath-standard, pymc, py4j,\
-astropy, pint, unyt, softposit, plumbum, cmdix, dill, limeade, hy, vllm(awaiting CUDA Windows fix),\
+astropy, pint, unyt, softposit, pendulum, more-itertools, plumbum, cmdix, dill, limeade, hy, vllm(awaiting CUDA Windows fix),\
 fastapi, uvicorn[standard],\
 datashader, bokeh, matplotlib, seaborn,
 
