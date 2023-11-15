@@ -7,6 +7,7 @@ from panda3d.core import *
 from direct.showbase import Loader
 import gltf
 
+
 # import direct.directbase.DirectStart
 # from direct.gui.OnscreenText import OnscreenText
 from direct.gui.DirectGui import *
@@ -466,7 +467,7 @@ class MainApp(ShowBase):
         verts, faces, normals, values = marching_cubes(vol, iso_val, spacing=(0.4, 0.4, 0.4))
         return ("_vertices", [["X=%.3f"%x[0] + " Y=%.3f"%x[1] + " Z=%.3f"%x[2]]for x in verts] , "_faces", [["X=%s"%x[0] + " Y=%s"%x[1] + " Z=%s"%x[2]]for x in faces] , "_normals", [["X=%.3f"%x[0] + " Y=%.3f"%x[1] + " Z=%.3f"%x[2]]for x in normals])
 
-    
+MainApp().run()
 
         # def print_result_under_mouse():
         #     print("m1 clicked")
@@ -546,4 +547,3 @@ class MainApp(ShowBase):
         #     return chq.getEntry(0)
 
 
-MainApp().run()
