@@ -1,5 +1,5 @@
 from ursina import *
-from ursina.networking import *
+from ursinanetworking import *
 from collections import deque
 
 # -- Begin custom classes with serialization for networking --

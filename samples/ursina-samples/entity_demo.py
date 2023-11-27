@@ -4,7 +4,10 @@ app = Ursina()
 
 title = Text('''position, rotation, scale and parenting demo''', position=(-.85, .475), scale=1.5)
 
-entity = Entity(model='cube', texture='white_cube')
+from ursina.shaders import lit_with_shadows_shader
+Entity.default_shader = lit_with_shadows_shader
+
+entity = Entity(model='DroneSphere.blend")
 child = Entity(parent=entity, x=1, model='cube', scale=.5, texture='white_cube', color=color.azure)
 spacing = .04
 ui_parent = Entity(parent=camera.ui, scale=.8, x=-.85)

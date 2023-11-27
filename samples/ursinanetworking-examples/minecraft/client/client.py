@@ -13,6 +13,8 @@ from player import *
 from player import *
 from break_particle import *
 from explosion import *
+import complexpbr
+#import simplepbr
 
 BLOCKS = [
     "grass",
@@ -24,7 +26,7 @@ BLOCKS = [
 ]
 
 App = Ursina()
-Client = UrsinaNetworkingClient("localhost", 25565)
+Client = UrsinaNetworkingClient("localhost", 25590)
 Easy = EasyUrsinaNetworkingClient(Client)
 window.borderless = False
 
@@ -36,6 +38,37 @@ Players = {}
 PlayersTargetPos = {}
 
 SelfId = -1
+yuh = Entity(model="DroneSphere.bam", origin=(-10,-10,-10))
+yuh = Entity(model="DroneSphere.glb", origin=(-13,-10,-13))
+yuh = Entity(model="DroneSphere.blend", origin=(-15,-10,-15))
+# simplepbr.init()
+
+# # Render Pipeline setup
+# sys.path.insert(0, "../../../../")
+# sys.path.insert(0, "../../../../RenderPipeline")
+
+
+# from rpcore import RenderPipeline, SpotLight
+
+# render_pipeline = RenderPipeline()
+# render_pipeline.pre_showbase_init()
+# render_pipeline.create(App)
+
+# # Set time of day
+# render_pipeline.daytime_mgr.time = 0
+
+# Complex PBR Setup
+# complexpbr.apply_shader(App.render)
+# # initialize complexpbr's screenspace effects (SSAO, SSR, AA, HSV color correction)
+# # this replaces CommonFilters functionality
+# complexpbr.screenspace_init()
+#
+# # make the cubemap rendering static (performance boost)
+# complexpbr.set_cubebuff_inactive()
+#
+# # make the cubemap rendering dynamic (this is the default state)
+# complexpbr.set_cubebuff_active()
+
 
 @Client.event
 def Explode(Position):

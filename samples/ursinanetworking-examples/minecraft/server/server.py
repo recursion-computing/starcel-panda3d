@@ -9,7 +9,7 @@ import asyncio
 
 print("Hello from the server !")
 
-Server = UrsinaNetworkingServer("localhost", 25565)
+Server = UrsinaNetworkingServer("localhost", 25590)
 Easy = EasyUrsinaNetworkingServer(Server)
 Blocks = {}
 
@@ -80,12 +80,12 @@ def request_place_block(Client, Content):
 def MyPosition(Client, NewPos):
     Easy.update_replicated_variable_by_name(f"player_{Client.id}", "position", NewPos)
 
-tmp = OpenSimplex()
+tmp = OpenSimplex(0)
 # Create the world
 for x in range(32):
     for z in range(32):
 
-        l = round(tmp.noise2d(x = x / 5, y = z / 5))
+        l = round(tmp.noise2(x = x / 5, y = z / 5))
 
         if l == -1: spawn_block("sand", (x, l, z), investigator = "server")
         if l == 0: spawn_block("grass", (x, l, z), investigator = "server")

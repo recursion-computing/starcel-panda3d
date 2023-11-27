@@ -8,7 +8,7 @@ class TestObject(Button, Replicator):
             self,
             parent = scene,
             position = position,
-            model = 'cube',
+            model = 'DroneSphere.bam',
             origin_y = .5,
             texture = 'stone_tex.bmp',
             color = color.color(0, 0, random.uniform(.9, 1.0)),

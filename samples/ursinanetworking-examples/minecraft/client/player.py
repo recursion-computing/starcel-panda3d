@@ -11,11 +11,7 @@ class PlayerRepresentation(Entity):
         super().__init__(
             parent = scene,
             position = position,
-            model = "cube",
-            texture = "white_cube",
-            origin_y = .5,
-            color = color.white,
-            highlight_color = color.white,
-            scale = (0.5, 1, 0.5)
+            model = "DroneSphere.bam",
+            scale = (1, 1, 1)
         )
         print("HELLO !")

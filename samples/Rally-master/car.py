@@ -9,7 +9,7 @@ Text.default_resolution = 1080 * Text.size
 class Car(Entity):
     def __init__(self, position = (0, 0, 4), rotation = (0, 0, 0), topspeed = 30, acceleration = 0.35, braking_strength = 30, friction = 0.6, camera_speed = 8, drift_speed = 35):
         super().__init__(
-            model = "sports-car.obj",
+            model = "DroneSphere.obj",
             texture = "sports-red.png",
             collider = "box",
             position = position,
@@ -231,8 +231,8 @@ class Car(Entity):
 
     def sports_car(self):
         self.car_type = "sports"
-        self.model = "sports-car.obj"
-        self.texture = "sports-red.png"
+        self.model = "DroneSphere.obj"
+        #self.texture = "sports-red.png"
         self.drive_sound.clip = "sports.mp3"
         self.topspeed = 30
         self.acceleration = 0.38
@@ -321,8 +321,8 @@ class Car(Entity):
 
     def rally_car(self):
         self.car_type = "rally"
-        self.model = "rally-car.obj"
-        self.texture = "rally-red.png"
+        self.model = "DroneSphere.obj"
+        #self.texture = "rally-red.png"
         self.drive_sound.clip = "rally.mp3"
         self.topspeed = 34
         self.acceleration = 0.46

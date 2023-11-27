@@ -151,20 +151,22 @@ main_menu.sun = sun
 Sky(texture = "sky")
 
 
-# Render Pipeline setup
-sys.path.insert(0, "../../")
-sys.path.insert(0, "../../RenderPipeline")
-
-
-from rpcore import RenderPipeline, SpotLight
-
-render_pipeline = RenderPipeline()
-render_pipeline.pre_showbase_init()
-render_pipeline.create(app)
-
-# Set time of day
-render_pipeline.daytime_mgr.time = 0
-
+# # Render Pipeline setup
+# sys.path.insert(0, "../../")
+# sys.path.insert(0, "../../RenderPipeline")
+#
+#
+# from rpcore import RenderPipeline, SpotLight
+#
+# render_pipeline = RenderPipeline()
+# render_pipeline.pre_showbase_init()
+# render_pipeline.create(app)
+#
+# # Set time of day
+# render_pipeline.daytime_mgr.time = 0
+#
+from ursina.shaders import lit_with_shadows_shader
+Entity.default_shader = lit_with_shadows_shader
 
 def update():
     # If multiplayer, Call the Multiplayer class
