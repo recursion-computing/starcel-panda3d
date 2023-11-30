@@ -37,14 +37,13 @@ class DistributedSmoothActor(DistributedSmoothNode, Actor):
             Actor.delete(self)
 
     def start(self):
-        # Let the DistributedSmoothNode take care of broadcasting the
-        # position updates several times a second.
+        # Let the DistributedSmoothNode take care of broadcasting the position updates several times a second.
         self.startPosHprBroadcast()
 
-    def loop(self, animName):
-        self.sendUpdate("loop", [animName])
-        return Actor.loop(self, animName)
-
-    def pose(self, animName, frame):
-        self.sendUpdate("pose", [animName, frame])
-        return Actor.pose(self, animName, frame)
+    # def loop(self, animName):
+    #     self.sendUpdate("loop", [animName])
+    #     return Actor.loop(self, animName)
+    #
+    # def pose(self, animName, frame):
+    #     self.sendUpdate("pose", [animName, frame])
+    #     return Actor.pose(self, animName, frame)

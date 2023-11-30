@@ -97,6 +97,7 @@ class GameClientRepository(ClientRepository):
         """ Join a game/room/whatever """
         # set our intersted zones to let the client see all distributed obects
         # in those zones
+        # TODO: Interest Zones?
         self.setInterestZones([1, 2])
 
         base.messenger.send('client-joined')
