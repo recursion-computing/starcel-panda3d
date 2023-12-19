@@ -1,6 +1,5 @@
 # Networked actor repos
 from ClientRepository import GameClientRepository
-from DistributedSmoothActor import DistributedSmoothActor
 
 from direct.showbase.ShowBase import ShowBase  # Loader
 from panda3d.core import *
@@ -21,10 +20,15 @@ import scipy.sparse.linalg
 import scipy
 import time, uuid, copy, asyncio
 from threading import Thread, Timer
+import copy
 import limeade
+from movementcontroller import DroneController
+from starcelfuncs import FiniteRepetitionSelector, look_at_rotation
 
 # Change to the current directory
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
+global drone
 
 
 class StdoutHandler:
@@ -49,305 +53,169 @@ class StdoutHandler:
         self._handled_stdout.flush()
 
 
-class Avatar:
-    def __init__(self, client_repository):
-        self.client_repository = client_repository
-        self.mmb_activated = False
-        self.alt_activated = False
-        self.ctrl_activated = False
-        self.freelook_activated = False
-        self.freelook_distance = 16
-        self.drone = DistributedSmoothActor(self.client_repository)
-        self.boom_arm = Cylinder(np.array(self.drone.getPos()),np.array(self.drone.getPos()) + np.array([0,self.freelook_distance,0]),1,self.drone)
-        self.value_selector = FiniteRepetitionSelector("*", 2)
-
-        self.client_repository.createDistributedObject(distObj=self.drone, zoneId=2)
-
-        # self.floater = NodePath(PandaNode("floater"))
-        # self.floater.reparentTo(self.drone)
-        # self.floater.setZ(2.0)
-
-        # mouseWatcherNode actually also handles keyboard
-        self.isDown = base.mouseWatcherNode.is_button_down
-
-        taskMgr.add(self.move, "moveTask")
-
-        base.accept("mouse2", self.mmb_down)
-        base.accept("mouse2-up", self.mmb_up)
-        base.accept("alt", self.alt_down)
-        base.accept("alt-up", self.alt_up)
-        base.accept("ctrl", self.ctrl_down)
-        base.accept("ctrl-up", self.ctrl_up)
-        base.accept("alt-wheel_up", self.alt_wheel_up)
-        base.accept("alt-wheel_down", self.alt_wheel_down)
-
-        self.drone.start()
-
-    def alt_wheel_up(self):
-        if self.freelook_activated:
-            print(self.freelook_distance)
-            self.freelook_distance = self.value_selector.decrease_value(self.freelook_distance)
-
-    def alt_wheel_down(self):
-        if self.freelook_activated:
-            print(self.freelook_distance)
-            self.freelook_distance = self.value_selector.increase_value(self.freelook_distance)
-
-    def wheel_up(self):
-        pass
-
-    def wheel_down(self):
-        pass
-
-    def ctrl_down(self):
-        self.ctrl_activated = True
-
-    def ctrl_up(self):
-        self.ctrl_activated = False
-
-    def alt_down(self):
-        self.alt_activated = True
-
-    def alt_up(self):
-        self.alt_activated = False
-
-    def mmb_down(self):
-        self.mmb_activated = True
-
-    def mmb_up(self):
-        self.mmb_activated = False
-
-    # Accepts arrow keys to move either the player or the menu cursor,
-    # Also deals with grid checking and collision detection
-    def move(self, task):
-
-        # Get the time that elapsed since last frame.  We multiply this with
-        # the desired speed in order to find out with which distance to move
-        # in order to achieve that desired speed.
-        dt = globalClock.getDt()
-
-        # If a move-key is pressed, move drone in the specified direction.
-        if self.isDown(KeyboardButton.asciiKey(b"w")):
-            self.drone.setY(self.drone, -10 * dt)
-        if self.isDown(KeyboardButton.asciiKey(b"a")):
-            self.drone.setX(self.drone, 10 * dt)
-        if self.isDown(KeyboardButton.asciiKey(b"s")):
-            self.drone.setY(self.drone, 10 * dt)
-        if self.isDown(KeyboardButton.asciiKey(b"d")):
-            self.drone.setX(self.drone, -10 * dt)
-        if self.isDown(KeyboardButton.asciiKey(b"e")):
-            self.drone.setZ(self.drone, 10 * dt)
-        if self.isDown(KeyboardButton.asciiKey(b"q")):
-            self.drone.setZ(self.drone, -10 * dt)
-        # if self.isDown(KeyboardButton.ascii_key("alt")):
-        #     print("alt clicked")
 
 
-        # update distributed position and rotation
-        # self.drone.setDistPos(self.drone.getX(), self.drone.getY(), self.drone.getZ())
-        # self.drone.setDistHpr(self.drone.getH(), self.drone.getP(), self.drone.getR())
+#
+# class Avatar:
+#     def __init__(self, client_repository):
+#         self.client_repository = client_repository
+#         self.mmb_activated = False
+#         self.alt_activated = False
+#         self.ctrl_activated = False
+#         self.freelook_activated = False
+#         self.freelook_distance = 8
+#         self.drone = DistributedSmoothActor(self.client_repository)
+#         self.boom_arm = Cylinder((0,0,0),np.array([self.freelook_distance,0,0]),.1,render)
+#         self.value_selector = FiniteRepetitionSelector("*", 2)
+#
+#         self.client_repository.createDistributedObject(distObj=self.drone, zoneId=2)
+#
+#         # self.floater = NodePath(PandaNode("floater"))
+#         # self.floater.reparentTo(self.drone)
+#         # self.floater.setZ(2.0)
+#
+#         # mouseWatcherNode actually also handles keyboard
+#         self.isDown = base.mouseWatcherNode.is_button_down
+#
+#         taskMgr.add(self.move, "moveTask")
+#
+#         base.accept("mouse2", self.mmb_down)
+#         base.accept("mouse2-up", self.mmb_up)
+#         base.accept("alt", self.alt_down)
+#         base.accept("alt-up", self.alt_up)
+#         base.accept("ctrl", self.ctrl_down)
+#         base.accept("ctrl-up", self.ctrl_up)
+#         base.accept("alt-wheel_up", self.alt_wheel_up)
+#         base.accept("alt-wheel_down", self.alt_wheel_down)
+#
+#         self.drone.start()
+#
+#     def alt_wheel_up(self):
+#         if self.freelook_activated:
+#             print(self.freelook_distance)
+#             self.freelook_distance = self.value_selector.decrease_value(self.freelook_distance)
+#
+#     def alt_wheel_down(self):
+#         if self.freelook_activated:
+#             print(self.freelook_distance)
+#             self.freelook_distance = self.value_selector.increase_value(self.freelook_distance)
+#
+#     def wheel_up(self):
+#         pass
+#
+#     def wheel_down(self):
+#         pass
+#
+#     def ctrl_down(self):
+#         self.ctrl_activated = True
+#
+#     def ctrl_up(self):
+#         self.ctrl_activated = False
+#
+#     def alt_down(self):
+#         self.alt_activated = True
+#
+#     def alt_up(self):
+#         self.alt_activated = False
+#
+#     def mmb_down(self):
+#         self.mmb_activated = True
+#
+#     def mmb_up(self):
+#         self.mmb_activated = False
+#
+#     # Accepts arrow keys to move either the player or the menu cursor,
+#     # Also deals with grid checking and collision detection
+#     def move(self, task):
+#
+#         # Get the time that elapsed since last frame.  We multiply this with
+#         # the desired speed in order to find out with which distance to move
+#         # in order to achieve that desired speed.
+#         dt = globalClock.getDt()
+#         move_speed = 7
+#         # If a move-key is pressed, move drone in the specified direction.
+#         # if self.isDown(KeyboardButton.asciiKey(b"w")):
+#         #     self.drone.setY(self.drone, -move_speed * dt)
+#         # if self.isDown(KeyboardButton.asciiKey(b"a")):
+#         #     self.drone.setX(self.drone, move_speed * dt)
+#         # if self.isDown(KeyboardButton.asciiKey(b"s")):
+#         #     self.drone.setY(self.drone, move_speed * dt)
+#         # if self.isDown(KeyboardButton.asciiKey(b"d")):
+#         #     self.drone.setX(self.drone, -move_speed * dt)
+#         # if self.isDown(KeyboardButton.asciiKey(b"e")):
+#         #     self.drone.setZ(self.drone, move_speed * dt)
+#         # if self.isDown(KeyboardButton.asciiKey(b"q")):
+#         #     self.drone.setZ(self.drone, -move_speed * dt)
+#         # if self.isDown(KeyboardButton.ascii_key("alt")):
+#         #     print("alt clicked")
+#         if self.isDown(KeyboardButton.asciiKey(b"w")):
+#             self.drone.setPos(self.drone, render.getRelativeVector(self.drone, Vec3(0, 1, 0)) * move_speed * dt)
+#             #self.drone.setPos(self.drone.getPos() + LVector3f(self.drone.getPos()).forward() * move_speed * dt) # render.getRelativeVector(self.drone, Vec3(0, 1, 0)).normalized()
+#         # if self.isDown(KeyboardButton.asciiKey(b"s")):
+#         #     self.drone.setPos(self.drone.getPos() + render.getRelativeVector(self.drone, Vec3(0, 0, -1)) * move_speed * dt)
+#         #     # self.drone.setY(self.drone, move_speed * dt)
+#         # if self.isDown(KeyboardButton.asciiKey(b"a")):
+#         #     self.drone.setPos(self.drone.getPos() + render.getRelativeVector(self.drone, Vec3(1, 0, 0)) * move_speed * dt)
+#         #     #self.drone.setX(self.drone, move_speed * dt)
+#         # if self.isDown(KeyboardButton.asciiKey(b"d")):
+#         #     self.drone.setPos(self.drone.getPos() + render.getRelativeVector(self.drone, Vec3(-1, 0, 0)) * move_speed * dt)
+#         #     #self.drone.setX(self.drone, -move_speed * dt)
+#         # if self.isDown(KeyboardButton.asciiKey(b"e")):
+#         #     self.drone.setPos(self.drone.getPos() + render.getRelativeVector(self.drone, Vec3(0, 1, 0)) * move_speed * dt)
+#         #     #self.drone.setZ(self.drone, move_speed * dt)
+#         # if self.isDown(KeyboardButton.asciiKey(b"q")):
+#         #     self.drone.setPos(self.drone.getPos() + render.getRelativeVector(self.drone, Vec3(0, -1, 0)) * move_speed * dt)
+#         #     #self.drone.setZ(self.drone, -move_speed * dt)
+#         #
 
-        # If drone is moving, loop the run animation.
-        # If he is standing still, stop the animation.
-        # currentAnim = self.drone.getCurrentAnim()
-        #
-        # if self.isDown(KeyboardButton.asciiKey(b"w")):
-        #     pass
-        #     #if currentAnim != "run":
-        #         #self.drone.loop("run")
-        # elif self.isDown(KeyboardButton.asciiKey(b"s")):
-        #     # Play the walk animation backwards.
-        #     #if currentAnim != "walk":
-        #         #self.drone.loop("walk")
-        #     self.drone.setPlayRate(-1.0, "walk")
-        # elif self.isDown(KeyboardButton.asciiKey(b"a")) or self.isDown(KeyboardButton.asciiKey(b"d")):
-        #     #if currentAnim != "walk":
-        #         #self.drone.loop("walk")
-        #     self.drone.setPlayRate(1.0, "walk")
-        # else:
-        #     if currentAnim is not None:
-        #         #self.drone.stop()
-        #         #self.drone.pose("walk", 5)
-        #         self.isMoving = False
-
-        # If the camera is too far from drone, move it closer.
-        # If the camera is too close to drone, move it farther.
-
-        # camvec = self.drone.getPos() - base.camera.getPos()
-        # camvec.setZ(0)
-        # camdist = camvec.length()
-        # camvec.normalize()
-        # if camdist > 10.0:
-        #     base.camera.setPos(base.camera.getPos() + camvec * (camdist - 10))
-        #     camdist = 10.0
-        # if camdist < 5.0:
-        #     base.camera.setPos(base.camera.getPos() - camvec * (5 - camdist))
-        #     camdist = 5.0
-
-        # The camera should look in drone's direction,
-        # but it should also try to stay horizontal, so look at
-        # a floater which hovers above drone's head.
-        # base.camera.lookAt(self.floater)
-
-        rot_speed = 100
-
-        if self.alt_activated:
-            self.freelook_activated = True
-        else:
-            self.freelook_activated = False
-
-        if self.freelook_activated:
-            self.boom_arm.update(self.drone.getPos(), np.array(self.drone.getPos()) + np.array([0,self.freelook_distance,0]), 1)
-            #swap to freelook camera
-            base.camera.setPos(self.boom_arm.line_end[0], self.boom_arm.line_end[1], self.boom_arm.line_end[2])
-
-            new_rot = self.boom_arm.look_at_rotation(np.array(self.boom_arm.line_end), np.array(self.drone.getPos()))
-            # print(new_rot)
-            # print(self.boom_arm.line_end)
-            # print(self.drone.getPos())
-            # print("\n")
-            # base.camera.setR(base.camera.getR() + 180)
-            if new_rot is not None and not np.isnan(new_rot).any():
-                base.camera.setHpr(new_rot[0] + 180, new_rot[1], new_rot[2])
-
-        else:
-            base.camera.setPos(self.drone.getPos())
-            if base.mouseWatcherNode.hasMouse():
-                x = base.mouseWatcherNode.getMouseX()
-                y = base.mouseWatcherNode.getMouseY()
-                base.camera.setP(base.camera.getP() + y * rot_speed)
-                self.drone.setP(base.camera.getP() + 90)
-                if self.mmb_activated:
-                    base.camera.setR(base.camera.getR() + x * rot_speed)
-                    self.drone.setR(base.camera.getR())
-                else:
-                    base.camera.setH(base.camera.getH() + -x * rot_speed)
-                    self.drone.setH(base.camera.getH() - 180)
+#
+#         # update distributed position and rotation (TODO: func no longer available?)
+#         #self.drone.setDistPos(self.drone.getX(), self.drone.getY(), self.drone.getZ())
+#         #self.drone.setDistHpr(self.drone.getH(), self.drone.getP(), self.drone.getR())
+#
+#         if self.alt_activated:
+#             self.freelook_activated = True
+#         else:
+#             self.freelook_activated = False
+#
+#         if self.freelook_activated:
+#             self.boom_arm.update((0,0,0),np.array([self.freelook_distance,0,0]),.1) # self.drone.getPos(),np.array([self.freelook_distance,0,0]),.1)#self.drone.getPos(), np.array(self.drone.getPos()) + np.array([0,self.freelook_distance,0]), 1)
+#             #swap to freelook camera
+#             base.camera.setPos(render.getRelativePoint(self.drone, tuple(self.boom_arm.line_end)))
+#
+#             new_rot = look_at_rotation(render.getRelativePoint(self.drone, tuple(self.boom_arm.line_end)), self.drone.getPos()) # TODO: camera.lookat func?
+#
+#             # print(new_rot)
+#             # print(self.boom_arm.line_end)
+#             # print(self.drone.getPos())
+#             # print("\n")
+#             # base.camera.setR(base.camera.getR() + 180)
+#             if new_rot is not None and not np.isnan(new_rot).any():
+#                 base.camera.setHpr(new_rot[2]+270, new_rot[1]+270, new_rot[0])
+#
+#         else:
+#             rot_speed = 60
+#             base.camera.setPos(self.drone.getPos())
+#             if base.mouseWatcherNode.hasMouse():
+#                 x = base.mouseWatcherNode.getMouseX()
+#                 y = base.mouseWatcherNode.getMouseY()
+#                 base.camera.setP(base.camera.getP() + y * rot_speed)
+#                 self.drone.setP(base.camera.getP() + 90)
+#                 if self.mmb_activated:
+#                     base.camera.setR(base.camera.getR() + x * rot_speed)
+#                     self.drone.setR(base.camera.getR())
+#                 else:
+#                     base.camera.setH(base.camera.getH() + -x * rot_speed)
+#                     self.drone.setH(base.camera.getH() - 180)
+#
+#
+#
+#         return task.cont
 
 
 
-        return task.cont
 
 
-
-class FiniteRepetitionSelector():
-    # +1
-    # 1     2     3     4     5     6
-    # +2
-    # 0     2     4     6     8     10     12
-    #
-    # *2
-    # 2 + 2     4 + 4     8 + 8     16 + 16    32 + 32
-    #
-    # ^ 2
-    # 2 * 2     4 * 4     16 * 16     256 * 256
-    #
-    # ↑2
-    # 2 ^ 2 = 4     4 ^ 4     256 ^ 256
-    #
-    # ↑↑2
-    # 2↑2 = 4     4↑4 = 4 ^ 4 ^ 4 ^ 4
-    #
-    # 2↑↑2 = 2↑2 = 4
-    #
-    # 2↑↑↑↑2 = 2↑↑↑2 = 2↑↑2
-    #
-    # auto(negate/direction)?
-    # auto(negate/direction) threshold: 1
-
-    def __init__(self, current_operator = "+", current_operand = 2):
-        self.operators = ["C/S", "+", "*", "^", "↑", "↑↑"]
-        self.current_operator = current_operator
-        self.current_operand = current_operand
-        self.autonegate_threshold = 0.0
-        self.autonegate = False
-
-    def autonegate_value(self, value):
-        if self.autonegate:
-            if self.autonegate_threshold > value > -1 * self.autonegate_threshold:
-                return -1 * value
-        return value
-
-    def basic_tetration(self, a, b):
-        # a is the first input value and b is the second input value
-        total = a
-        for i in range(1, round(b)):
-            total = a ^ total
-        return total
-
-    def decrease_value(self, value):
-        value = self.autonegate_value(value)
-        if self.current_operator == self.operators[1]:
-            return value - self.current_operand
-        if self.current_operator == self.operators[2]:
-            return value / self.current_operand
-        if self.current_operator == self.operators[3]:
-            return pow(value, (1 / self.current_operand))
-        if self.current_operator == self.operators[4]:
-            return self.basic_tetration(value,self.current_operand)
-        return value
-
-    def increase_value(self, value):
-        value = self.autonegate_value(value)
-        if self.current_operator == self.operators[1]:
-            return value + self.current_operand
-        if self.current_operator == self.operators[2]:
-            return value * self.current_operand
-        if self.current_operator == self.operators[3]:
-            return pow(value, self.current_operand)
-        return value
-
-class SpatialDimensionSelector():
-    def __init__(self):
-        Line2 = [[-1.000000, 0.000000, 0.000000], [1.000000, 0.000000, 0.000000]]
-        Plane4 = [[0.000000, 1.000000, 0.000000], [1.000000, 0.000000, 0.000000], [0.000000, -1.000000, 0.000000],
-                  [-1.000000, 0.000000, 0.000000]]
-        Optimal6 = [[1.000000, 0.000000, 0.000000], [-1.000000, 0.000000, 0.000000], [0.000000, 1.000000, 0.000000],
-                    [0.000000, -1.000000, 0.000000], [0.000000, 0.000000, 1.000000], [0.000000, 0.000000, -1.000000]]
-        Optimal4 = [[0.577350, 0.577350, 0.577350], [-0.577350, -0.577350, 0.577350], [-0.577350, 0.577350, -0.577350],
-                    [0.577350, -0.577350, -0.577350]]
-        Wolfram5 = [[-1.000000, 0.000000, 0.000000], [1.000000, 0.000000, 0.000000], [0.000000, -0.866025, -0.500000],
-                    [0.000000, 0.866025, -0.500000], [0.000000, 0.000000, 1.000000]]
-        Optimal6_0 = [[1.000000, 0.000000, 0.000000], [-1.000000, 0.000000, 0.000000], [0.000000, 1.000000, 0.000000],
-                      [0.000000, -1.000000, 0.000000], [0.000000, 0.000000, 1.000000], [0.000000, 0.000000, -1.000000]]
-        Wolfram7 = [[0.000000, 0.000000, -1.000000], [0.000000, 0.000000, 1.000000], [1.000000, 0.000000, 0.000000],
-                    [0.309017, -0.951057, 0.000000], [0.309017, 0.951057, 0.000000], [-0.809017, -0.587785, 0.000000],
-                    [-0.809017, 0.587785, 0.000000]]
-        Optimal8 = [[0.859533, 0.000000, 0.511081], [-0.859533, 0.000000, 0.511081], [0.000000, 0.859533, 0.511081],
-                    [0.000000, -0.859533, 0.511081], [0.607781, 0.607781, -0.511081], [0.607781, -0.607781, -0.511081],
-                    [-0.607781, 0.607781, -0.511081], [-0.607781, -0.607781, -0.511081]]
-        Cube8 = [[0.577350, 0.577350, 0.577350], [-0.577350, 0.577350, 0.577350], [0.577350, -0.577350, 0.577350],
-                 [-0.577350, -0.577350, 0.577350], [0.577350, 0.577350, -0.577350], [-0.577350, 0.577350, -0.577350],
-                 [0.577350, -0.577350, -0.577350], [-0.577350, -0.577350, -0.577350]]
-        Wolfram9 = [[-0.37796447300922725, -0.6546536707079771, -0.6546536707079771],
-                    [-0.37796447300922725, -0.6546536707079771, 0.6546536707079771],
-                    [-0.37796447300922725, 0.6546536707079771, -0.6546536707079771],
-                    [-0.37796447300922725, 0.6546536707079771, 0.6546536707079771],
-                    [0.7559289460184545, 0., -0.6546536707079771], [0.7559289460184545, 0., 0.6546536707079771],
-                    [-1., 0., 0.], [0.5, -0.8660254037844386, 0.], [0.5, 0.8660254037844386, 0.]]
-        Wolfram10 = [[-0.8944271909999157, 0., -0.44721359549995787], [0.8944271909999157, 0., 0.44721359549995787],
-                     [-0.7236067977499789, -0.5257311121191336, 0.44721359549995787],
-                     [-0.7236067977499789, 0.5257311121191336, 0.44721359549995787],
-                     [-0.276393202250021, -0.85065080835204, -0.44721359549995787],
-                     [-0.276393202250021, 0.85065080835204, -0.44721359549995787],
-                     [0.276393202250021, -0.85065080835204, 0.44721359549995787],
-                     [0.276393202250021, 0.85065080835204, 0.44721359549995787],
-                     [0.7236067977499789, -0.5257311121191336, -0.44721359549995787],
-                     [0.7236067977499789, 0.5257311121191336, -0.44721359549995787]]
-        Wolfram11 = [[0., 0., 1.], [-0.8944271909999157, 0., -0.44721359549995787],
-                     [0.8944271909999157, 0., 0.44721359549995787],
-                     [-0.276393202250021, -0.85065080835204, -0.44721359549995787],
-                     [-0.276393202250021, 0.85065080835204, -0.44721359549995787],
-                     [0.276393202250021, -0.85065080835204, 0.44721359549995787],
-                     [0.276393202250021, 0.85065080835204, 0.44721359549995787],
-                     [-0.7236067977499789, -0.5257311121191336, 0.44721359549995787],
-                     [-0.7236067977499789, 0.5257311121191336, 0.44721359549995787],
-                     [0.7236067977499789, -0.5257311121191336, -0.44721359549995787],
-                     [0.7236067977499789, 0.5257311121191336, -0.44721359549995787]]
-        Optimal12 = [[0.850651, 0.000000, -0.525731], [0.525731, -0.850651, 0.000000], [0.000000, -0.525731, 0.850651],
-                     [0.850651, 0.000000, 0.525731], [-0.525731, -0.850651, 0.000000], [0.000000, 0.525731, -0.850651],
-                     [-0.850651, 0.000000, -0.525731], [-0.525731, 0.850651, 0.000000], [0.000000, 0.525731, 0.850651],
-                     [-0.850651, 0.000000, 0.525731], [0.525731, 0.850651, 0.000000], [0.000000, -0.525731, -0.850651]]
 
 
 class Cylinder():
@@ -358,66 +226,41 @@ class Cylinder():
         self.line_midpoint = (np.array(line_start) + np.array(line_end)) / 2.0
         self.model = loader.loadModel("models/Cylinder.bam")
         self.model.reparent_to(reparent_to)
-        euler_angles = self.look_at_rotation(self.line_midpoint, self.line_end)
+        euler_angles = look_at_rotation(self.line_midpoint, self.line_end)
         print("aaaaaaaaaa")
         print(euler_angles)
-        euler_angles = [x + 360 if x < 0 else x for x in euler_angles]
+        euler_angles = [x + 180 for x in euler_angles]
         print(euler_angles)
-        self.model.setPosHprScale(self.line_midpoint[0], self.line_midpoint[1], self.line_midpoint[2], euler_angles[0], euler_angles[1], euler_angles[2], line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start)))))
+        self.model.setPosHprScale(self.line_midpoint[0], self.line_midpoint[1], self.line_midpoint[2], euler_angles[2]+90, euler_angles[1]+270, euler_angles[0], line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start))))/2)
 
     def update(self, line_start, line_end, line_thickness):
         self.line_start = np.array(line_start)
         self.line_end = np.array(line_end)
         self.line_thickness = line_thickness
         self.line_midpoint = (np.array(line_start) + np.array(line_end)) / 2.0
-        euler_angles = self.look_at_rotation(self.line_midpoint, self.line_end)
-        self.model.setPosHprScale(self.line_midpoint[0], self.line_midpoint[1], self.line_midpoint[2], euler_angles[0], euler_angles[1], euler_angles[2], line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start)))))
+        euler_angles = look_at_rotation(self.line_midpoint, self.line_end)
+        print("aaaaaaaaaa")
+        print(euler_angles)
+        euler_angles = [x + 180 for x in euler_angles] #[x + 360 if x < 0 else x for x in euler_angles]
+        print(euler_angles) # roll, pitch, yaw
+        self.model.setPosHprScale(self.line_midpoint[0], self.line_midpoint[1], self.line_midpoint[2], euler_angles[2]+90, euler_angles[1]+270, euler_angles[0], line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start))))/2)
 
-    def look_at_rotation(self, start, target):
-        # Check if both start and target vectors are zero
-        start_is_zero = np.allclose(start, [0.0, 0.0, 0.0])
-        target_is_zero = np.allclose(target, [0.0, 0.0, 0.0])
+    # def update_length(self, line_start, line_end, line_thickness):
+    #     self.line_start = np.array(line_start)
+    #     self.line_end = np.array(line_end)
+    #     self.line_thickness = line_thickness
+    #     self.line_midpoint = (np.array(line_start) + np.array(line_end)) / 2.0
+    #     euler_angles = self.look_at_rotation(self.line_midpoint, self.line_end)
+    #     print("aaaaaaaaaa")
+    #     print(euler_angles)
+    #     euler_angles = [x + 180 for x in euler_angles] #[x + 360 if x < 0 else x for x in euler_angles]
+    #     print(euler_angles) # roll, pitch, yaw
+    #     self.model.setPosHprScale(self.line_midpoint[0], self.line_midpoint[1], self.line_midpoint[2], euler_angles[2]+90, euler_angles[1]+270, euler_angles[0], line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start))))/2)
 
-        # Add an offset to both start and target vectors if they are zero
-        if start_is_zero and target_is_zero:
-            start += np.array([1.0, 1.0, 1.0])
-            target += np.array([1.0, 1.0, 1.0])
+        # self.model.setPos(self.line_midpoint[0], self.line_midpoint[1], self.line_midpoint[2])
+        # self.model.setScale(line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start)))))
 
-        # Calculate the forward direction and up direction
-        forward = (target - start)
-        forward_norm = np.linalg.norm(forward)
 
-        # Check if the norm is zero
-        if forward_norm == 0:
-            # Handle the case when the vectors are parallel (no rotation needed)
-            return (0.0, 0.0, 0.0)
-
-        forward /= forward_norm
-        up = np.array([0.0, 1.0, 0.0])  # Assuming the up direction is the positive Y-axis
-
-        # Calculate the right direction using cross product
-        right = np.cross(up, forward)
-        right_norm = np.linalg.norm(right)
-
-        # Check if the norm is zero
-        if right_norm == 0:
-            # Handle the case when the vectors are parallel (no rotation needed)
-            return (0.0, 0.0, 0.0)
-
-        right /= right_norm
-
-        # Calculate the up direction using cross product again
-        new_up = np.cross(forward, right)
-
-        # Build the rotation matrix
-        rotation_matrix = np.column_stack((right, new_up, -forward))
-
-        # Convert the rotation matrix to Euler angles
-        euler_angles = (np.degrees(np.arctan2(rotation_matrix[2, 1], rotation_matrix[2, 2])),
-        np.degrees(
-            np.arctan2(-rotation_matrix[2, 0], np.sqrt(rotation_matrix[2, 1] ** 2 + rotation_matrix[2, 2] ** 2))),
-        np.degrees(np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])))
-        return tuple(euler_angles)
 
 
 
@@ -432,9 +275,9 @@ class MainApp(ShowBase):
         def set_relative_mode_and_hide_cursor():
             props = WindowProperties()
             props.setCursorHidden(True)
-            # TODO: Update to M_Relative in Panda 11.0
-            props.setMouseMode(WindowProperties.M_confined)
-            base.win.requestProperties(props)
+            # TODO: Update to M_Relative in Panda 11.0 and replace
+            props.set_mouse_mode(WindowProperties.M_confined)
+            base.win.request_properties(props)
 
         def normal_mouse_mode():
             props = WindowProperties()
@@ -475,15 +318,27 @@ class MainApp(ShowBase):
 
         self.render_pipeline = RenderPipeline()
         self.render_pipeline.create(self)
+        # base.camLens.set_near(.01)
         # self.render.set_shader_auto()
         # gltf.patch_loader(self.loader)
 
         # Set time of day
         self.render_pipeline.daytime_mgr.time = 0
 
-        # Init movement controller
-        # self.controller = MovementController(self)
-        #self.controller.setup()
+        # initialize the client
+        client = GameClientRepository()
+        def clientJoined():
+            # title["text"] = "Starcel (CONNECTED)"
+            global drone
+            drone = DroneController(client)
+            drone.setup()
+
+
+        base.accept("client-joined", clientJoined)
+
+        #yo = DroneController(client)
+        #yo.setup()
+
         set_relative_mode_and_hide_cursor()
 
         # Fonts and theme
@@ -646,11 +501,79 @@ class MainApp(ShowBase):
 
         # Scene Setup
         # Load test scene
+        # Load files with python -m blend2bam 1.blend 2.bam
+        # Transparency in .blend not working, .egg should work
         model = loader.loadModel("scene/TestScene.bam")
         model.reparent_to(render)
         model.setPos(0, 0, -10)
         model.node().setIntoCollideMask(BitMask32.bit(1))
-        Cylinder([1, 1, 1], [100, 100, 100], 10, render)
+        # Cylinder([-10, -10, -10], [10, -10, 10], .1, render)
+
+        model2 = loader.loadModel("models/coordinate2.bam")  # y and z are flipped
+        print(type(model2))
+        model2.reparent_to(render)
+        model2.setScale(1)
+        model2.setPos(model2, 0, 0, 0)
+        # model2.setTransparency(TransparencyAttrib.MAlpha)
+        # model2.setTransparency(True)
+        # model2.setAlphaScale(0.5)
+
+        # pivot = NodePath('somethnig')
+        # pivot.reparent_to(render)
+        # #pivot.reparent_to(render)
+        # #random.seed(0)
+        #
+        # model2 = loader.loadModel("models/DroneSphereRot.bam")  # y and z are flipped
+        # model2.reparent_to(render)
+        # n = 10
+        #
+        # global rings
+        # global cubes
+        # cubes = []
+        # rings = []
+        #
+        # for z in range(1,5):
+        #     ring = NodePath('somethnig2')
+        #     ring.reparent_to(render)
+        #     ring.setScale(z)
+        #     rings.append(ring)
+        #     for i in range(n):
+        #         pivot.setHpr(0,i * 360 // n,0)
+        #         e = loader.loadModel("models/DroneSphereRot.bam")
+        #         e.reparent_to(pivot)
+        #         e.setScale(.2 * z)
+        #         model2.setPos(0, 0, ((z * z) + 3) * .16)
+        #         #e.color = color.hsv(0, 0, z / 5 + (random.random() * .1))
+        #         e.reparent_to(ring)
+        #         cubes.append(e)
+
+        # for e in cubes:
+        #     e.reparent_to(render)
+        # for e in rings:
+        #     e.reparent_to(render)
+
+
+        # model3 = loader.loadModel("models/DroneSphere.bam")
+        # model3.reparent_to(render)
+        # model3.setHpr(45,45,45)
+        # model3.setScale(.5)
+        # model3.setPos(model3, 0, -1, 0)
+
+        # model4 = loader.loadModel("models/DroneSphere.bam")
+        # model4.reparent_to(render)
+        # model4.setHpr(45,45,45)
+        # model4.setScale(.25)
+        # model4.setPos(model3, 0, 0, 1)
+
+        model5 = loader.loadModel("models/DroneSphereRot.bam")
+        model5.reparent_to(render)
+        model5.setHpr(45,90,135)
+        model5.setScale(.05)
+        model5.setPos(model5.getPos() + render.getRelativeVector(model5, Vec3(0, 1, 0)).normalized()*3)
+
+
+
+
 
         # model = loader.loadModel("/c/Users/xnick/Downloads/panda3d-master/panda3d-master/models/panda.egg")
         # model.reparent_to(render)
@@ -740,13 +663,15 @@ class MainApp(ShowBase):
         # self.mouseTask = taskMgr.add(self.mouseTask, 'mouseTask')
         self.accept("mouse1", mouseTask)
 
+        self.updateTask = taskMgr.add(self.update, "update")
+
         def spawn_scell_at_player():
             # print(self.controller.showbase.cam.get_pos(self.controller.showbase.render))
             #return spawn_scell(pos=self.controller.showbase.cam.get_pos(self.controller.showbase.render))
-            return spawn_scell(pos=Avatar().drone.getPos())
+            return spawn_scell(pos=drone.drone.getPos())
 
         def spawn_scell(input_text="=", pos=(0, 0, 0)):
-            print("equal clicked")
+            #print("equal clicked")
             text = TextNode('Text' + str(uuid.uuid4()))
             text.setText(input_text)
             text.setFont(font)
@@ -754,7 +679,20 @@ class MainApp(ShowBase):
             textNode = render.attachNewNode(text)  # text.generate()
             # textNode.getChild(0).node().setIntoCollideMask(BitMask32.bit(1))
             # textNode.setScale(50)
+
+            text_margin = .1
+            pos3d = Point3()
+            nearPoint = Point3()
+            farPoint = Point3()
+            base.camLens.extrude((-(1 - text_margin), 1 - text_margin), nearPoint, farPoint)
+            if self.plane.intersectsLine(pos3d, render.getRelativePoint(camera, nearPoint), render.getRelativePoint(camera, farPoint)):
+                print("Mouse ray intersects ground plane at ", pos3d)
+
+            Plane(Vec3(0, 0, 1), Point3(0, 0, z))
+
+
             textNode.setPos(pos)
+            textNode.setHpr(drone.drone.get_hpr()+(180,0,0))
             textNode.setScale(1, .1, 1)
             textNode.node().setIntoCollideMask(BitMask32.bit(1))
 
@@ -785,8 +723,8 @@ class MainApp(ShowBase):
         base.accept("esc", esc)
         base.accept("m", normal_mouse_mode)
 
-        # initialize the client
-        client = GameClientRepository()
+
+
 
         # # Function to put instructions on the screen.
         # def addInstructions(pos, msg):
@@ -795,22 +733,32 @@ class MainApp(ShowBase):
         #                         pos=(0.08, -pos - 0.04), scale=.06)
 
         # Function to put title on the screen.
-        def addTitle(text):
-            return OnscreenText(text=text, style=1, pos=(-0.1, 0.09), scale=.08,
-                                parent=base.a2dBottomRight, align=TextNode.ARight,
-                                fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1))
-
-        title = addTitle("Starcel (NOT CONNECTED)")
+        # def addTitle(text):
+        #     return OnscreenText(text=text, style=1, pos=(-0.1, 0.09), scale=.08,
+        #                         parent=base.a2dBottomRight, align=TextNode.ARight,
+        #                         fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1))
+        #
+        # title = addTitle("Starcel (NOT CONNECTED)")
 
         # inst1 = addInstructions(0.06, "W|A|S|D: Move avatar)")
         # inst2 = addInstructions(0.12, "esc: Close the client")
         # inst3 = addInstructions(0.24, "See console output")
 
-        def clientJoined():
-            title["text"] = "Starcel (CONNECTED)"
-            Avatar(client)
+    def update(self, task):
+        # global rings
+        # global cubes
+        # dt = globalClock.getDt()
+        # for e in rings:
+        #     rotation_speed = 5 - e.getScale()[0]
+        #     rotation_speed = math.pow(rotation_speed, 1.5)
+        #     e.setHpr(e,0,rotation_speed * dt * 10,0)
+        #
+        # for e in cubes:
+        #     rotation_speed = 5 - e.parent.getScale()[0]
+        #     rotation_speed = math.pow(rotation_speed, 1.5)
+        #     e.setHpr(e,Vec3(rotation_speed) * dt * 20)
 
-        base.accept("client-joined", clientJoined)
+        return task.cont
 
     ### Begin Command Processing ###
     # list(cmdix.listcommands()): arch, base64, basename, bunzip2, bzip2, cal, cat, cp, crond, diff, dirname, env, expand, gunzip, gzip, httpd, init, kill, ln, logger, ls, md5sum, mkdir, mktemp, more, mv, nl, pwd, rm, rmdir, sendmail, seq, sh, sha1sum, sha224sum, sha256sum, sha384sum, sha512sum, shred, shuf, sleep, sort, tail, tar, touch, uname, uuidgen, wc, wget, yes, zip
@@ -824,7 +772,7 @@ class MainApp(ShowBase):
     # print('Error: '  + e.decode('ascii'))
     # print('code: ' + str(proc.returncode))
     # Linux Commands
-    def ls(args):
+    def ls(self,args):
         windows_command = "dir /b /ogn"
         if not args or args is None:
             # cmdix.runcommandline(windows_command + " ".join(args))
@@ -853,11 +801,11 @@ class MainApp(ShowBase):
             #     #print('code: ' + str(proc.returncode))
             #     return o.decode('ascii')
 
-    def man(args):
+    def man(self,args):
         print((subprocess.run(["help"], shell=True, capture_output=True, text=True).stdout))
 
     # Built-in commands
-    def scenegraph(_):
+    def scenegraph(self,_):
         lsb = LineStream()
         render.ls(lsb)
         text = ''
@@ -865,7 +813,7 @@ class MainApp(ShowBase):
             text += lsb.getLine() + '\n'
         return text
 
-    def autocomplete(search_word):
+    def autocomplete(self,search_word):
         autocomplete = fast_autocomplete.AutoComplete(words=words)
         ac_output = []
         if search_word:
@@ -874,7 +822,7 @@ class MainApp(ShowBase):
         # return [''.join(x) for x in ac_output]
         return ['_autocomplete'] + ac_output
 
-    def plot(_):
+    def plot(self,_):
         x, y, z = np.pi * np.mgrid[-1:1:7j, -1:1:7j, -1:1:7j]
         vol = np.cos(x) + np.cos(y) + np.cos(z)
         iso_val = 0.0
@@ -885,3 +833,26 @@ class MainApp(ShowBase):
 
 
 MainApp().run()
+
+
+# from rpcore.util.movement_controller import MovementController
+#
+# self.controller = MovementController(self)
+# # self.controller.set_initial_position(
+# #     Vec3(-7.5, -5.3, 1.8), Vec3(-5.9, -4.0, 1.6))
+# self.controller.setup()
+#
+# base.accept("l", self.tour)
+#
+#
+# def tour(self):
+#     """ Camera flythrough """
+#     mopath = (
+#         (Vec3(-10.8645000458, 9.76458263397, 2.13306283951), Vec3(-133.556228638, -4.23447799683, 0.0)),
+#         (Vec3(-10.6538448334, -5.98406457901, 1.68028640747), Vec3(-59.3999938965, -3.32706642151, 0.0)),
+#         (Vec3(9.58458328247, -5.63625621796, 2.63269257545), Vec3(58.7906494141, -9.40668964386, 0.0)),
+#         (Vec3(6.8135137558, 11.0153560638, 2.25509500504), Vec3(148.762527466, -6.41223621368, 0.0)),
+#         (Vec3(-9.07093334198, 3.65908527374, 1.42396306992), Vec3(245.362503052, -3.59927511215, 0.0)),
+#         (Vec3(-8.75390911102, -3.82727789879, 0.990055501461), Vec3(296.090484619, -0.604830980301, 0.0)),
+#     )
+#     self.controller.play_motion_path(mopath, 3.0)

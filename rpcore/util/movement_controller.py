@@ -36,7 +36,8 @@ import os
 import subprocess
 
 from panda3d.core import ModifierButtons, Vec3, PStatClient
-from panda3d.core import Point3, CurveFitter
+from panda3d.core import Point3, CurveFitter, Quat
+import math
 
 
 class MovementController(object):
@@ -181,7 +182,6 @@ class MovementController(object):
 
     def update(self, task):
         """ Internal update method """
-
         delta = self.clock_obj.get_dt()
 
         # Update mouse first
@@ -243,6 +243,7 @@ class MovementController(object):
         # else:
         #     rotation = 0
         # self.showbase.camera.set_r(rotation)
+
         return task.cont
 
     def play_motion_path(self, points, point_duration=1.2):

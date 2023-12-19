@@ -9,7 +9,7 @@ import os
 import sys
 import math
 from random import random, randint, seed
-from panda3d.core import Vec3, load_prc_file_data
+from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 
 # Change to the current directory
@@ -41,6 +41,10 @@ class MainApp(ShowBase):
         self.render_pipeline = RenderPipeline()
         self.render_pipeline.create(self)
 
+        props = WindowProperties()
+        props.setCursorHidden(True)
+        props.setMouseMode(WindowProperties.M_relative)
+
         # This is a helper class for better camera movement - its not really
         # a rendering element, but it included for convenience
         from rpcore.util.movement_controller import MovementController
@@ -58,8 +62,8 @@ class MainApp(ShowBase):
 
         # Init movement controller
         self.controller = MovementController(self)
-        self.controller.set_initial_position(
-            Vec3(-7.5, -5.3, 1.8), Vec3(-5.9, -4.0, 1.6))
+        # self.controller.set_initial_position(
+        #     Vec3(-7.5, -5.3, 1.8), Vec3(-5.9, -4.0, 1.6))
         self.controller.setup()
 
         base.accept("l", self.tour)
