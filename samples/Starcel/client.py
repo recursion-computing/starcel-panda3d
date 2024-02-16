@@ -786,13 +786,13 @@ class MainApp(ShowBase):
             #print(rotation_speed)
             if rotation_speed > 0:
                 rotation_speed = math.pow(rotation_speed, 1.5)
-            e.set_h(e,rotation_speed * globalClock.getDt() * 10)#rotation_speed * globalClock.getDt() * 10)
+            e.set_h(e,rotation_speed * base.clock.getDt() * 10)#rotation_speed * globalClock.getDt() * 10)
 
         for e in self.rices:
             rotation_speed = 5 - e.get_parent().get_scale()[0]
             if rotation_speed > 0:
                 rotation_speed = math.pow(rotation_speed, 1.5)
-            e.set_hpr(e, rotation_speed * globalClock.getDt() * 20,rotation_speed * globalClock.getDt() * 20,rotation_speed * globalClock.getDt() * 20)#rotation_speed * globalClock.getDt() * 20)
+            e.set_hpr(e, rotation_speed * base.clock.getDt() * 20,rotation_speed * base.clock.getDt() * 20,rotation_speed * base.clock.getDt() * 20)#rotation_speed * globalClock.getDt() * 20)
         # global rings
         # global cubes
         # dt = globalClock.getDt()
