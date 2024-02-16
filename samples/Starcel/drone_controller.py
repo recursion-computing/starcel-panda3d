@@ -151,7 +151,7 @@ class DroneController():
         self.speed = 1
         self.initial_position = Vec3(0)
         self.initial_hpr = Vec3(0)
-        self.mouse_enabled = True
+        self.mouse_enabled = False
         self.last_mouse_pos = [0, 0]
         self.mouse_sensivity = 4
         self.keyboard_hpr_speed = 1
@@ -2260,7 +2260,16 @@ class DroneController():
         current_glasses_rotation = list(map(float, self.xrsdk.ReadArSensors().split(",")))
         self.current_glasses_rotation = Quat(current_glasses_rotation[3], current_glasses_rotation[0],
                                               current_glasses_rotation[1], current_glasses_rotation[2])
+
+
+        new_quat = self.unity_to_panda3d_quaternion(
+            Quat(current_glasses_rotation[0], current_glasses_rotation[1], current_glasses_rotation[2], current_glasses_rotation[3]))
+        flip_rotation = Quat()
+        flip_rotation.setFromAxisAngle(180, Vec3(0, 0, 1))
+        self.working_current_glasses_rotation = (flip_rotation * Quat(new_quat[3], new_quat[0], new_quat[1], new_quat[2]))
+
         self.current_rotation = self.drone.get_quat()
+        self.current_camera_rotation = base.camera.get_quat()
         #self.current_rotation = self.drone.get_hpr()
 
         #base.camera.set_quat(self.current_glasses_rotation)
@@ -2432,6 +2441,15 @@ class DroneController():
         quat = changing_quat_second + quat_relative
         return quat #.invert_in_place()
 
+    def unity_to_panda3d_quaternion(self,unity_quaternion):
+        # Flip Y and Z axes
+        unity_quaternion = [-unity_quaternion[0], unity_quaternion[2], unity_quaternion[1], -unity_quaternion[3]]
+
+        # Change the sign of the Y and Z components
+        panda3d_quaternion = Quat(unity_quaternion[0], -unity_quaternion[1], unity_quaternion[2], unity_quaternion[3])
+
+        return panda3d_quaternion
+
     def update(self, task):
         """ Internal update method """
         delta = self.clock_obj.get_dt()
@@ -2445,7 +2463,7 @@ class DroneController():
             self.current_mouse_pos = (x * base.camLens.get_fov().x * self.mouse_sensivity,
                                       y * base.camLens.get_fov().y * self.mouse_sensivity)
 
-            if self.mouse_enabled:
+            if not self.mouse_enabled:
                 diffx = -self.current_mouse_pos[0] # TODO: FIX with M_relative in 11.0 (self.last_mouse_pos[0] -
                 # self.current_mouse_pos[0])
                 diffy = self.current_mouse_pos[1]  # (self.last_mouse_pos[1] - self.current_mouse_pos[1])
@@ -2522,10 +2540,27 @@ class DroneController():
                     #base.camera.set_hpr()#data_recv[0],data_recv[1],data_recv[2])
                     gyro_values = list(map(float, self.xrsdk.ReadArSensors().split(",")))
                     print(gyro_values)
-                    invertquat = Quat(gyro_values[0], gyro_values[1], gyro_values[2], gyro_values[3])
-                    invertquat.invert_in_place()
-                    base.camera.set_quat(Quat(gyro_values[0], gyro_values[1], gyro_values[2], gyro_values[3]).multiply(
-                        self.current_rotation).multiply(invertquat))
+                    new_quat = self.unity_to_panda3d_quaternion(Quat(gyro_values[0], gyro_values[1], gyro_values[2], gyro_values[3]))
+                    flip_rotation = Quat()
+                    flip_rotation.setFromAxisAngle(180, Vec3(0, 0, 1))
+                    # flip_rota = Quat()
+                    # flip_rota.setFromAxisAngle(145, Vec3(0, 0, 1))
+                    working_gyro_values = (flip_rotation * Quat(new_quat[3], new_quat[0], new_quat[1], new_quat[2]))
+                    working_gyro_values.normalize()
+                    # rotation_quat = (working_gyro_values + (self.current_rotation - self.working_current_glasses_rotation)) # this alongside the xrsdk reset on firstpersonfreelook can be used for calibrating an initial look direction
+                    # rotation_quat.set_hpr(rotation_quat.get_hpr()) #attempt to convert quaternion to a unit quaternion
+                    #flip_rota.invert_in_place()
+                    vertical_tilt_quat = Quat()
+                    vertical_tilt_quat.setFromAxisAngle(-22, (1, 0, 0)) # 22° tilt
+                    base.camera.set_quat(working_gyro_values * (vertical_tilt_quat * flip_rotation * self.current_camera_rotation))
+                    # flip_rotb = Quat()
+                    # flip_rotb.setFromAxisAngle(180, Vec3(0, 1, 0))
+
+
+                    # invertquat = Quat(gyro_values[0], gyro_values[1], gyro_values[2], gyro_values[3])
+                    # invertquat.invert_in_place()
+                    # base.camera.set_quat(Quat(gyro_values[0], gyro_values[1], gyro_values[2], gyro_values[3]).multiply(
+                    #     self.current_rotation).multiply(invertquat))
 
                     # invertquat = Quat(gyro_values[3], gyro_values[0], gyro_values[1], gyro_values[2])
                     # invertquat.invert_in_place()
@@ -2546,6 +2581,18 @@ class DroneController():
                     #     Quat(self.current_glasses_rotation[0], self.current_glasses_rotation[1],
                     #          self.current_glasses_rotation[2], self.current_glasses_rotation[3]),
                     #     Quat(gyro_values[3], gyro_values[0], gyro_values[1], gyro_values[2]))
+
+                    #base.camera.set_quat(base.camera,rotation_quat)
+
+                    #clutched code
+                    #cameraclutch_hpr = rotation_quat.get_hpr()
+
+                    # TODO: replace with variables because earlier set_quat overwrites any persisting changes from diff
+                    # if self.mmb_activated:
+                    #     base.camera.set_r(base.camera, - diffx)
+                    # else:
+                    #     base.camera.set_h(base.camera, diffx)
+                    #     base.camera.set_p(base.camera, diffy)
 
                     #raw_string = self.ss.readline()#.strip().decode()
                     #print(raw_string)
@@ -2649,8 +2696,8 @@ class DroneController():
                     self.velocity = self.velocity * max(0.0, 1.0 - delta * 60.0 / max(0.001, self.smoothness))
 
                 self.last_mouse_pos = self.current_mouse_pos[:]
-                #if not self.firstpersonlook_activated:
-                base.win.movePointer(0, int(base.win.getXSize() / 2), int(base.win.getYSize() / 2))
+                if not self.mouse_enabled:
+                    base.win.movePointer(0, int(base.win.getXSize() / 2), int(base.win.getYSize() / 2))
 
         # bobbing
         # ftime = self.clock_obj.get_frame_time()

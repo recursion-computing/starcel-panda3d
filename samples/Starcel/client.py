@@ -231,16 +231,7 @@ class StdoutHandler:
 #                 else:
 #                     base.camera.setH(base.camera.getH() + -x * rot_speed)
 #                     self.drone.setH(base.camera.getH() - 180)
-#
-#
-#
 #         return task.cont
-
-
-
-
-
-
 
 class Cylinder():
     def __init__(self, line_start, line_end, line_thickness, reparent_to):
@@ -282,7 +273,7 @@ class Cylinder():
         # self.model.setScale(line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start)))))
 
 
-
+# TODO: Rework the syntax for the mouse hovering and clicking of objects and the keyboard input system
 class MainApp(ShowBase):
     # Setup window size, title and so on
     load_prc_file_data("", """
@@ -291,6 +282,7 @@ class MainApp(ShowBase):
     """)
 
     def __init__(self):
+        self.mouse_activated = False
         def set_relative_mode_and_hide_cursor():
             props = WindowProperties()
             props.setCursorHidden(True)
@@ -303,6 +295,16 @@ class MainApp(ShowBase):
             props.setCursorHidden(False)
             props.setMouseMode(WindowProperties.M_absolute)
             base.win.requestProperties(props)
+
+        def toggle_mouse_mode():
+            if self.mouse_activated:
+                self.mouse_activated = False
+                drone.mouse_enabled = self.mouse_activated
+                set_relative_mode_and_hide_cursor()
+            else:
+                self.mouse_activated = True
+                drone.mouse_enabled = self.mouse_activated
+                normal_mouse_mode()
 
         def getalias():
             # load aliases from csv into xarray
@@ -351,6 +353,7 @@ class MainApp(ShowBase):
             global drone
             drone = DroneController(client)
             drone.xrsdk = myXRSDK
+            drone.mouse_enabled = self.mouse_activated
             drone.setup()
 
 
@@ -583,9 +586,9 @@ class MainApp(ShowBase):
 
         model4 = loader.loadModel("models/car.bam")
         model4.reparent_to(render)
-        model4.setScale(1)
+        model4.setScale(2.5)
         model4.setHpr(215, 0, 0)
-        model4.set_pos(0, -25, -10)
+        model4.set_pos(0, -25, -10.3)
         self.render_pipeline.prepare_scene(model4)
 
         model5 = loader.loadModel("models/DroneSphereRot.bam")
@@ -751,7 +754,8 @@ class MainApp(ShowBase):
             pass
 
         base.accept("esc", esc)
-        base.accept("m", normal_mouse_mode)
+        base.accept("m", toggle_mouse_mode)
+
         base.accept("=", spawn_scell_at_player)
 
 
