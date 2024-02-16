@@ -125,7 +125,7 @@ class LevelEditor(Entity):
             for name in ('position', 'rotation', 'scale', 'color', 'texture'):
                 setattr(clone, name, getattr(target, name))
 
-            clone.model = copy(target.model)
+            clone.text = copy(target.text)
             clone.start_dragging()
 
         if held_keys['control'] and key == 'c' and mouse.hovered_entity in self.entities:
@@ -133,7 +133,7 @@ class LevelEditor(Entity):
                 'rotation' : mouse.hovered_entity.rotation,
                 'scale' : mouse.hovered_entity.scale,
                 'color' : mouse.hovered_entity.color,
-                'model_name' : mouse.hovered_entity.model.name,
+                'model_name' : mouse.hovered_entity.text.name,
             }
             if mouse.hovered_entity.texture:
                 self.entity_to_paste['texture'] = mouse.hovered_entity.texture.name

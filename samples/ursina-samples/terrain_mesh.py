@@ -5,7 +5,7 @@ app = Ursina()
 
 e = Entity(model=Terrain('loddefjord_height_map', skip=8), texture='loddefjord_color', scale=100, scale_y=50)
 Sky(rotation_y=125)
-e.model.save('loddefjord_terrain')
+e.text.save('loddefjord_terrain')
 scene.fog_color = color.gray
 scene.fog_density = .01
 

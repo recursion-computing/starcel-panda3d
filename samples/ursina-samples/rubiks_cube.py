@@ -32,7 +32,7 @@ cubes = []
 for x in range(3):
     for y in range(3):
         for z in range(3):
-            e = Entity(model=copy(combine_parent.model), position=Vec3(x,y,z) - (Vec3(3,3,3)/3), texture='white_cube')
+            e = Entity(model=copy(combine_parent.text), position=Vec3(x, y, z) - (Vec3(3, 3, 3) / 3), texture='white_cube')
             cubes.append(e)
 
 

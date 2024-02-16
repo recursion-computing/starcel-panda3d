@@ -4,8 +4,9 @@ from ClientRepository import GameClientRepository
 from direct.showbase.ShowBase import ShowBase  # Loader
 from panda3d.core import *
 # from panda3d.core import Vec3, load_prc_file_data, KeyboardButton, NodePath, PandaNode, TextNode
-import gltf
+#import gltf
 
+# import direct.directbase.DirectStart
 # import direct.directbase.DirectStart
 # from direct.gui.OnscreenText import OnscreenText
 from direct.gui.DirectGui import *
@@ -22,13 +23,36 @@ import time, uuid, copy, asyncio
 from threading import Thread, Timer
 import copy
 import limeade
-from movementcontroller import DroneController
-from starcelfuncs import FiniteRepetitionSelector, look_at_rotation
+from drone_controller import DroneController
+from starcelfuncs import FiniteRepetitionSelector, look_at_rotation, SCell
+
+import clr
+from pprint import pprint
+#clr.AddReference('C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\TCLRayneoAir2CLIBroadcaster.sln')
+#clr.AddReference('C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\TCLRayneoAir2CLIBroadcaster')
+#clr.AddReference('C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\XRSDK.dll')
+#clr.AddReference("C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\bin\Debug\\net6.0\\TCLRayneoAir2CLIBroadcaster.dll")
+#clr.AddReference("C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\bin\Debug\\net6.0\\)
+#clr.AddReference('C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\XRSDK.dll')
+
+sys.path.append("C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLI\\bin\\Debug\\net7.0\\")
+clr.AddReference("TCLRayneoAir2CLI")
+
+#print(clr._available_namespaces)
+from FfalconXR import XRSDK  # syntax highlighter may not highlight errors
+#print(clr._available_namespaces)
+
+myXRSDK = XRSDK()
+#print(dir(XRSDK))
+myXRSDK.XRSDK_Init()
 
 # Change to the current directory
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 global drone
+#from ctypes import POINTER, Structure, c_byte, c_uint32, c_float, cast, sizeof
+
+# print(cast(XRSDK.ReadArSensors(), POINTER(c_byte * 5192)).contents)
 
 
 class StdoutHandler:
@@ -53,9 +77,9 @@ class StdoutHandler:
         self._handled_stdout.flush()
 
 
+# Convert System.IntPtr to ctypes pointer
 
 
-#
 # class Avatar:
 #     def __init__(self, client_repository):
 #         self.client_repository = client_repository
@@ -227,10 +251,9 @@ class Cylinder():
         self.model = loader.loadModel("models/Cylinder.bam")
         self.model.reparent_to(reparent_to)
         euler_angles = look_at_rotation(self.line_midpoint, self.line_end)
-        print("aaaaaaaaaa")
-        print(euler_angles)
+        #print(euler_angles)
         euler_angles = [x + 180 for x in euler_angles]
-        print(euler_angles)
+        #print(euler_angles)
         self.model.setPosHprScale(self.line_midpoint[0], self.line_midpoint[1], self.line_midpoint[2], euler_angles[2]+90, euler_angles[1]+270, euler_angles[0], line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start))))/2)
 
     def update(self, line_start, line_end, line_thickness):
@@ -239,10 +262,9 @@ class Cylinder():
         self.line_thickness = line_thickness
         self.line_midpoint = (np.array(line_start) + np.array(line_end)) / 2.0
         euler_angles = look_at_rotation(self.line_midpoint, self.line_end)
-        print("aaaaaaaaaa")
-        print(euler_angles)
+        #print(euler_angles)
         euler_angles = [x + 180 for x in euler_angles] #[x + 360 if x < 0 else x for x in euler_angles]
-        print(euler_angles) # roll, pitch, yaw
+        #print(euler_angles) # roll, pitch, yaw
         self.model.setPosHprScale(self.line_midpoint[0], self.line_midpoint[1], self.line_midpoint[2], euler_angles[2]+90, euler_angles[1]+270, euler_angles[0], line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start))))/2)
 
     # def update_length(self, line_start, line_end, line_thickness):
@@ -251,7 +273,6 @@ class Cylinder():
     #     self.line_thickness = line_thickness
     #     self.line_midpoint = (np.array(line_start) + np.array(line_end)) / 2.0
     #     euler_angles = self.look_at_rotation(self.line_midpoint, self.line_end)
-    #     print("aaaaaaaaaa")
     #     print(euler_angles)
     #     euler_angles = [x + 180 for x in euler_angles] #[x + 360 if x < 0 else x for x in euler_angles]
     #     print(euler_angles) # roll, pitch, yaw
@@ -259,8 +280,6 @@ class Cylinder():
 
         # self.model.setPos(self.line_midpoint[0], self.line_midpoint[1], self.line_midpoint[2])
         # self.model.setScale(line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start)))))
-
-
 
 
 
@@ -331,6 +350,7 @@ class MainApp(ShowBase):
             # title["text"] = "Starcel (CONNECTED)"
             global drone
             drone = DroneController(client)
+            drone.xrsdk = myXRSDK
             drone.setup()
 
 
@@ -342,7 +362,7 @@ class MainApp(ShowBase):
         set_relative_mode_and_hide_cursor()
 
         # Fonts and theme
-        fontPath = "SourceCodePro-Regular.ttf"
+        fontPath = "SourceCodePro-Bold.ttf"
         font = loader.loadFont(fontPath, color=(1, 1, 1, 1), renderMode=TextFont.RMSolid)
         font2 = loader.loadFont(fontPath, color=(1, 1, 1, 1))
 
@@ -437,7 +457,7 @@ class MainApp(ShowBase):
             try:
                 print(self.hud_bound_textNode.node())
                 # self.hud_bound_textNode.node().setText(output)
-                pyout = spawn_scell(output, self.hud_bound_textNode.getPos() + (0, 0, -2))
+                pyout = spawn_scell(text=output, pos=self.hud_bound_textNode.getPos() + (0, 0, -2))
                 t = Timer(.02, fix_pyout3dtext, (pyout, output,))
                 t.start()
                 # thread = Thread(target = spawn_scell, args = (output, self.hud_bound_textNode.getPos() + (0,0,-2),), daemon=True)
@@ -507,6 +527,8 @@ class MainApp(ShowBase):
         model.reparent_to(render)
         model.setPos(0, 0, -10)
         model.node().setIntoCollideMask(BitMask32.bit(1))
+        self.render_pipeline.prepare_scene(model)
+
         # Cylinder([-10, -10, -10], [10, -10, 10], .1, render)
 
         model2 = loader.loadModel("models/coordinate2.bam")  # y and z are flipped
@@ -559,11 +581,12 @@ class MainApp(ShowBase):
         # model3.setScale(.5)
         # model3.setPos(model3, 0, -1, 0)
 
-        # model4 = loader.loadModel("models/DroneSphere.bam")
-        # model4.reparent_to(render)
-        # model4.setHpr(45,45,45)
-        # model4.setScale(.25)
-        # model4.setPos(model3, 0, 0, 1)
+        model4 = loader.loadModel("models/car.bam")
+        model4.reparent_to(render)
+        model4.setScale(1)
+        model4.setHpr(215, 0, 0)
+        model4.set_pos(0, -25, -10)
+        self.render_pipeline.prepare_scene(model4)
 
         model5 = loader.loadModel("models/DroneSphereRot.bam")
         model5.reparent_to(render)
@@ -571,12 +594,49 @@ class MainApp(ShowBase):
         model5.setScale(.05)
         model5.setPos(model5.getPos() + render.getRelativeVector(model5, Vec3(0, 1, 0)).normalized()*3)
 
-
-
-
-
         # model = loader.loadModel("/c/Users/xnick/Downloads/panda3d-master/panda3d-master/models/panda.egg")
         # model.reparent_to(render)
+        self.model6 = loader.loadModel("models/rice_bowl.glb")
+        self.model6.set_scale(1.5)
+        self.model6.set_pos(0,0,9)
+        self.model6.reparent_to(render)
+
+        # self.model_rice = loader.loadModel("models/ricegrain.glb")
+        # self.model_rice.set_scale(1)
+        # self.model_rice.reparent_to(render)
+
+        # rotation code ported from https://github.com/pokepetter
+        self.rice_rot = 0
+        self.rings = []
+        self.rices = []
+        self.pivot = render.attachNewNode('pivot')
+        num_of_rice=11
+        for z in range(1,5):
+            ring = render.attachNewNode('ring')
+            ring.set_scale(z*3)
+            self.rings.append(ring)
+            for i in range(num_of_rice):
+                self.pivot.set_h(i * 360 // num_of_rice)
+                e = loader.loadModel("models/ricegrain.glb")
+                if (z * num_of_rice) + i == 34:
+                    e = loader.loadModel("models/ricegrainchrome.glb")
+                    e_col = e.attachNewNode(CollisionNode('RiceColNode'))
+                    e_col.node().addSolid(CollisionBox(e.getTightBounds()[0] - e.getPos(), e.getTightBounds()[1] - e.getPos()))#CollisionBox(e.getTightBounds()[0] / 50, e.getTightBounds()[1] / 50))
+                e.reparent_to(self.pivot)
+                e.set_x(((z * z) + 3) * .16)
+                e.set_scale(max(.2 * math.pow(z,.9) *.1, .01))
+                if (z * num_of_rice) + i == 34:
+                    e.set_scale(e.get_scale()*10)
+                old_pos = e.get_pos()
+                old_pos = render.getRelativePoint(self.pivot, old_pos)
+                old_scale = e.get_scale()
+                #old_hpr = e.get_hpr()
+                e.reparent_to(ring)#e.world_parent = ring
+                #e.set_scale(old_scale)
+                e.set_pos(old_pos)
+                e.set_hpr(random()*360,random()*360,random()*360)
+                self.rices.append(e)
+
 
         self.ambientLight = self.render.attachNewNode(AmbientLight('ambient'))
         self.ambientLight.node().setColor((0.1, 0.1, 0.1, 1))
@@ -643,8 +703,9 @@ class MainApp(ShowBase):
 
                             # print("B" + self.hud_bound_textNode.node().text)
                             entry._d_entry.set(self.hud_bound_textNode.node().text)
-                            # print(self.pq.getEntry(0))
-
+                            print(self.pq.getEntry(0))
+                        elif pickedObj.getName() == "RiceColNode":
+                            os.startfile("C:\Program Files\Google\Chrome\Application\chrome.exe")
                         else:
                             self.win.getProperties().getForeground()
                             entry._d_entry.guiItem.set_focus(False)
@@ -663,57 +724,26 @@ class MainApp(ShowBase):
         # self.mouseTask = taskMgr.add(self.mouseTask, 'mouseTask')
         self.accept("mouse1", mouseTask)
 
+
         self.updateTask = taskMgr.add(self.update, "update")
+
+
+        def scenegraph():
+            lsb = LineStream()
+            render.ls(lsb)
+            text = ''
+            while lsb.isTextAvailable():
+                text += lsb.getLine() + '\n'
+            return text
+
+        def spawn_scell(pos, text="=Testing"):
+            global drone
+            return SCell(drone,text=text,pos=pos)
 
         def spawn_scell_at_player():
             # print(self.controller.showbase.cam.get_pos(self.controller.showbase.render))
             #return spawn_scell(pos=self.controller.showbase.cam.get_pos(self.controller.showbase.render))
             return spawn_scell(pos=drone.drone.getPos())
-
-        def spawn_scell(input_text="=", pos=(0, 0, 0)):
-            #print("equal clicked")
-            text = TextNode('Text' + str(uuid.uuid4()))
-            text.setText(input_text)
-            text.setFont(font)
-            text.setAlign(TextNode.ALeft)
-            textNode = render.attachNewNode(text)  # text.generate()
-            # textNode.getChild(0).node().setIntoCollideMask(BitMask32.bit(1))
-            # textNode.setScale(50)
-
-            text_margin = .1
-            pos3d = Point3()
-            nearPoint = Point3()
-            farPoint = Point3()
-            base.camLens.extrude((-(1 - text_margin), 1 - text_margin), nearPoint, farPoint)
-            if self.plane.intersectsLine(pos3d, render.getRelativePoint(camera, nearPoint), render.getRelativePoint(camera, farPoint)):
-                print("Mouse ray intersects ground plane at ", pos3d)
-
-            Plane(Vec3(0, 0, 1), Point3(0, 0, z))
-
-
-            textNode.setPos(pos)
-            textNode.setHpr(drone.drone.get_hpr()+(180,0,0))
-            textNode.setScale(1, .1, 1)
-            textNode.node().setIntoCollideMask(BitMask32.bit(1))
-
-            fromObject = textNode.attachNewNode(CollisionNode('TextColNode'))
-            # fromObject.show()
-            # print(textNode.getTightBounds())
-            fromObject.node().addSolid(CollisionBox(textNode.getTightBounds()[0] - textNode.getPos(),
-                                                    textNode.getTightBounds()[1] - textNode.getPos()))
-            try:
-                entry._d_entry.set(textNode.node().text)
-            except:
-                pass
-            # print(len(entry._edited_text))
-            entry._d_entry.guiItem.set_focus(True)
-            entry._d_entry.setCursorPosition(len(entry._edited_text))
-            self.hud_bound_textNode = textNode
-            # print(textNode)
-            return textNode
-
-        base.accept("=", spawn_scell_at_player)
-
         def esc():
             # entry['focus'] = False
             entry._d_entry.guiItem.set_focus(False)
@@ -722,6 +752,8 @@ class MainApp(ShowBase):
 
         base.accept("esc", esc)
         base.accept("m", normal_mouse_mode)
+        base.accept("=", spawn_scell_at_player)
+
 
 
 
@@ -744,12 +776,28 @@ class MainApp(ShowBase):
         # inst2 = addInstructions(0.12, "esc: Close the client")
         # inst3 = addInstructions(0.24, "See console output")
 
+
     def update(self, task):
+        self.rice_rot += 1
+        self.model6.set_hpr(-self.rice_rot,0,0)
+
+        for e in self.rings:
+            rotation_speed = 5 - e.get_scale()[0]
+            #print(rotation_speed)
+            if rotation_speed > 0:
+                rotation_speed = math.pow(rotation_speed, 1.5)
+            e.set_h(e,rotation_speed * globalClock.getDt() * 10)#rotation_speed * globalClock.getDt() * 10)
+
+        for e in self.rices:
+            rotation_speed = 5 - e.get_parent().get_scale()[0]
+            if rotation_speed > 0:
+                rotation_speed = math.pow(rotation_speed, 1.5)
+            e.set_hpr(e, rotation_speed * globalClock.getDt() * 20,rotation_speed * globalClock.getDt() * 20,rotation_speed * globalClock.getDt() * 20)#rotation_speed * globalClock.getDt() * 20)
         # global rings
         # global cubes
         # dt = globalClock.getDt()
         # for e in rings:
-        #     rotation_speed = 5 - e.getScale()[0]
+        #     rotation_speed = 5 - e.getScale()[0]e
         #     rotation_speed = math.pow(rotation_speed, 1.5)
         #     e.setHpr(e,0,rotation_speed * dt * 10,0)
         #
@@ -805,14 +853,6 @@ class MainApp(ShowBase):
         print((subprocess.run(["help"], shell=True, capture_output=True, text=True).stdout))
 
     # Built-in commands
-    def scenegraph(self,_):
-        lsb = LineStream()
-        render.ls(lsb)
-        text = ''
-        while lsb.isTextAvailable():
-            text += lsb.getLine() + '\n'
-        return text
-
     def autocomplete(self,search_word):
         autocomplete = fast_autocomplete.AutoComplete(words=words)
         ac_output = []

@@ -56,9 +56,9 @@ class TrailRenderer(Entity):
             self._t += time.dt
             if self._t >= self.update_step:
                 self._t = 0
-                self.renderer.model.vertices.pop(0)
-                self.renderer.model.vertices.append(self.world_position)
-                self.renderer.model.generate()
+                self.renderer.text.vertices.pop(0)
+                self.renderer.text.vertices.append(self.world_position)
+                self.renderer.text.generate()
 
     def start_trail(self):
         self.trailing = True

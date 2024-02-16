@@ -14,7 +14,7 @@ ec = EditorCamera(rotation_x=-20)
 
 
 def shoot():
-    player.bullet_renderer.model.vertices.append(player.position)
+    player.bullet_renderer.text.vertices.append(player.position)
 
 shoot_cooldown = .1
 shoot_sequence = Sequence(Func(shoot), Wait(shoot_cooldown), loop=True)
@@ -25,8 +25,8 @@ def update():
     player.position += move_direction * player.speed * time.dt
     bg.texture_offset += Vec2(0, time.dt)
 
-    for i, bullet in enumerate(player.bullet_renderer.model.vertices):
-        player.bullet_renderer.model.vertices[i] += Vec3(0, time.dt * 10, 0)
+    for i, bullet in enumerate(player.bullet_renderer.text.vertices):
+        player.bullet_renderer.text.vertices[i] += Vec3(0, time.dt * 10, 0)
         for enemy in enemies:
             if distance_2d(bullet, enemy) < .5:
                 enemy.hp -= 1
@@ -35,14 +35,14 @@ def update():
                     enemies.remove(enemy)
                     destroy(enemy)
                     # todo: add explosion particles and sound effect
-                player.bullet_renderer.model.vertices.remove(bullet)
+                player.bullet_renderer.text.vertices.remove(bullet)
 
                 print('a')
 
-    if len(player.bullet_renderer.model.vertices):
-        player.bullet_renderer.model.vertices = player.bullet_renderer.model.vertices[-100:]  # max bullets
+    if len(player.bullet_renderer.text.vertices):
+        player.bullet_renderer.text.vertices = player.bullet_renderer.text.vertices[-100:]  # max bullets
 
-    player.bullet_renderer.model.generate()
+    player.bullet_renderer.text.generate()
 
 
 def input(key):

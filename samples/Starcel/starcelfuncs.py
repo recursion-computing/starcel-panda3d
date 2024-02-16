@@ -1,4 +1,7 @@
 import numpy as np
+from panda3d.core import *
+from direct.interval.IntervalGlobal import *
+import uuid
 
 class Cylinder():
     def __init__(self, line_start, line_end, line_thickness, reparent_to):
@@ -21,6 +24,111 @@ class Cylinder():
         euler_angles = [x + 180 for x in euler_angles] #[x + 360 if x < 0 else x for x in euler_angles]
         print(euler_angles) # roll, pitch, yaw
         self.model.setPosHprScale(self.line_midpoint[0], self.line_midpoint[1], self.line_midpoint[2], euler_angles[2]+90, euler_angles[1]+270, euler_angles[0], line_thickness, line_thickness, float(np.sqrt((self.line_end - self.line_start).dot((self.line_end - self.line_start))))/2)
+
+class SCell():
+    def __init__(self, most_recent_owner, text="=", pos=(0, 0, 0)):
+        self.focused = True
+        self.most_recent_owner = most_recent_owner
+        ### Everything required to spawn 3D text
+        self.font = loader.loadFont("SourceCodePro-Bold.ttf", color=(1, 1, 1, 1), renderMode=TextFont.RMSolid, scaleFactor=13) # .6 1.4
+        self.text = TextNode('Text' + str(uuid.uuid4()))
+        self.text.setText(text)
+        self.text.setFont(self.font)
+        self.text.setAlign(TextNode.ALeft)
+        #self.text.reparent_to(render)
+        textNode = render.attachNewNode(self.text)  # text.generate()
+        # textNode.getChild(0).node().setIntoCollideMask(BitMask32.bit(1))
+        # textNode.setScale(50)
+        # text_margin = .1
+        # pos3d = Point3()
+        # nearPoint = Point3()
+        # farPoint = Point3()
+        # base.camLens.extrude((-(1 - text_margin), 1 - text_margin), nearPoint, farPoint)
+        # if self.plane.intersectsLine(pos3d, render.getRelativePoint(camera, nearPoint), render.getRelativePoint(camera, farPoint)):
+        #     print("Mouse ray intersects ground plane at ", pos3d)
+        #Plane(Vec3(0, 0, 1), Point3(0, 0, z))
+        textNode.setPos(pos)
+        textNode.setScale(1, .1, 1)
+
+        # pt1, pt2 = textNode.getTightBounds()
+        # width = pt2.getX() - pt1.getX()
+        # height = pt2.getY() - pt1.getY()
+        # depth = pt2.getZ() - pt1.getZ()
+        # print(width) #.6
+        # print(height) #.1
+        # print(depth) #1.4
+        textNode.setHpr(self.most_recent_owner.drone.get_hpr()+(180,0,0))
+        textNode.node().setIntoCollideMask(BitMask32.bit(1))
+
+        fromObject = textNode.attachNewNode(CollisionNode('TextColNode'))
+        # fromObject.show()
+        # print(textNode.getTightBounds())
+        fromObject.node().addSolid(CollisionBox(textNode.getTightBounds()[0] - textNode.getPos(),
+                                                textNode.getTightBounds()[1] - textNode.getPos()))
+        print("AB")
+        self.model = textNode
+        print("BB")
+        print(self.model)
+        self.cursor = Cursor(len(text),len(text),self)
+        self.cursor_seq = Sequence()
+        self.cursor_seq.append(Func(lambda: self.cursor.model.hide()))
+        self.cursor_seq.append(Wait(.1))
+        self.cursor_seq.append(Func(lambda: self.cursor.model.show()))
+        # print(textNode.getTightBounds()[0] - textNode.getPos())
+        # print(textNode.getTightBounds()[1] - textNode.getPos())
+
+
+        # try:
+        #     entry._d_entry.set(textNode.node().text)
+        # except:
+        #     pass
+        # print(len(entry._edited_text))
+        # entry._d_entry.guiItem.set_focus(True)
+        # entry._d_entry.setCursorPosition(len(entry._edited_text))
+        # self.hud_bound_textNode = textNode
+        # print(textNode)
+        self.update()
+
+    def update(self):
+        if self.focused:
+            #self.cursor.update()
+            self.cursor_seq.start()
+        else:
+            self.cursor_seq.stop()
+
+        self.most_recent_owner.keyboard_capturer.buffer
+
+    def clicked(self):
+        self.focused = True
+
+
+
+
+class Cursor():
+    def __init__(self, start, end, parent_scell):
+        self.model = loader.loadModel("models/cursor4.bam")
+        self.model.set_scale(.05,.4,.4) # set x to .5 for full character width
+        self.model.reparent_to(parent_scell.model)
+        self.location_start = 0
+        self.location_end = None
+
+    def update(self, start, end):
+        self.location_start = start
+        self.location_end = end
+        pass
+
+class KeyboardCapturer():
+    def __init__(self):
+        base.buttonThrowers[0].node().setKeystrokeEvent('keystroke')
+        base.accept('keystroke', self.myFunc)
+        self.buffer = ""
+    def myFunc(self, keyname):
+        self.buffer+= keyname
+        # print(keyname)
+        # print(self.buffer)
+
+    def clear_buffer(self):
+        self.buffer = ""
 
 class FiniteRepetitionSelector():
     # +1

@@ -71,7 +71,7 @@ class Multiplayer(Entity):
         for p in self.players:
             self.players[p].position += (Vec3(self.players_target_pos[p]) - self.players[p].position) / 25
             self.players[p].rotation += (Vec3(self.players_target_rot[p]) - self.players[p].rotation) / 25
-            self.players[p].model = f"{self.players_target_model[p]}"
+            self.players[p].text = f"{self.players_target_model[p]}"
             self.players[p].texture = f"{self.players_target_tex[p]}"
             self.players[p].text_object.text = f"{self.players_target_name[p]}"
             self.players[p].highscore = f"{self.players_target_score[p]}"

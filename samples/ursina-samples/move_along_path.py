@@ -8,8 +8,8 @@ mover_2 = Entity(model='quad', scale=1, t=0, color=color.lime, speed=0)
 
 line_renderer = Entity(model=Mesh(vertices=[Vec3(0), Vec3(0)], mode='line', thickness=5), z=.1)
 def update():
-    line_renderer.model.vertices = [e.position for e in points]
-    line_renderer.model.generate()
+    line_renderer.text.vertices = [e.position for e in points]
+    line_renderer.text.generate()
     mover_2.look_at_2d(mover)
     # mover_2.position += mover_2.up * mover_2.speed * time.dt
     mover_2.position = lerp(mover_2.position, mover.position, time.dt*2)

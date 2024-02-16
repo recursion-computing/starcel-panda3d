@@ -452,7 +452,7 @@ class RenderPipeline(RPObject):
         """ Sets the default camera settings, this includes the cameras
         near and far plane, as well as FoV. The reason for this is, that pandas
         default field of view is very small, and thus we increase it. """
-        self._showbase.camLens.set_near_far(0.1, 70000)
+        self._showbase.camLens.set_near_far(0.05, 70000)
         self._showbase.camLens.set_fov(40)
 
     def _compute_render_resolution(self):

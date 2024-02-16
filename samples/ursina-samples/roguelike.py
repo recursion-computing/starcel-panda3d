@@ -23,10 +23,10 @@ level_geometry = Entity(model=Mesh(mode='point', thickness=.5), texture='circle'
 for y, line in enumerate(grid):
     for x, char in enumerate(line):
         if char == '#':
-            level_geometry.model.vertices.append(Vec3(x,y,0))
+            level_geometry.text.vertices.append(Vec3(x, y, 0))
 
-level_geometry.model.generate()
-level_geometry.model.set_render_mode_perspective(True)
+level_geometry.text.generate()
+level_geometry.text.set_render_mode_perspective(True)
 
 player = Button(parent=scene, text='<lime>@', position=(4,2,-.1))
 

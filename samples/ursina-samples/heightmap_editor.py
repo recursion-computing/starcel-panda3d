@@ -34,18 +34,18 @@ terrain.scale *= 5
 i = 0
 for z in range(h):
     for x in range(w):
-        terrain.model.vertices.append(Vec3((x/min_dim)+(centering_offset.x), 0, (z/min_dim)+centering_offset.y))
-        terrain.model.uvs.append((x/w, z/h))
+        terrain.text.vertices.append(Vec3((x / min_dim) + (centering_offset.x), 0, (z / min_dim) + centering_offset.y))
+        terrain.text.uvs.append((x / w, z / h))
 
         if x > 0 and z > 0:
-            terrain.model.triangles.append((i, i-1, i-w-1, i-w-0))
+            terrain.text.triangles.append((i, i - 1, i - w - 1, i - w - 0))
 
         i += 1
 
 # terrain.model.colors = [color.black for v in terrain.model.vertices]
-terrain.model.generate()
+terrain.text.generate()
 
-terrain.model.height_values =[[0 for x in range(w)] for y in range(h)]
+terrain.text.height_values =[[0 for x in range(w)] for y in range(h)]
 # from ursina.prefabs.first_person_controller import FirstPersonController
 
 ec = EditorCamera(rotation_smoothing=0, enabled=1, rotation=(30,30,0))
@@ -117,7 +117,7 @@ def update():
                 for x_offset in range(-3, 3):
                     true_z, true_x = x+x_offset, z+z_offset
                     if true_x >= 0 and true_x+1 < w and true_z >= 0 and true_z+1 < h:
-                        heights.append(terrain.model.height_values[true_x][true_z])
+                        heights.append(terrain.text.height_values[true_x][true_z])
             average_height = sum(heights) / len(heights)
             # print('average:', average_height)
             for z_offset in range(-3, 3):
@@ -128,33 +128,33 @@ def update():
                     if true_x >= 0 and true_x+1 < w and true_z >= 0 and true_z+1 < h:
                         if not held_keys['shift']:
                             if not held_keys['alt']:
-                                terrain.model.height_values[true_z][true_x] += strength * brush_falloff * time.dt
+                                terrain.text.height_values[true_z][true_x] += strength * brush_falloff * time.dt
                             else:
-                                terrain.model.height_values[true_z][true_x] -= strength * brush_falloff * time.dt
+                                terrain.text.height_values[true_z][true_x] -= strength * brush_falloff * time.dt
                         else:   #smooth
-                            terrain.model.height_values[true_z][true_x] = lerp(terrain.model.height_values[true_z][true_x], average_height, strength * brush_falloff * time.dt)
+                            terrain.text.height_values[true_z][true_x] = lerp(terrain.text.height_values[true_z][true_x], average_height, strength * brush_falloff * time.dt)
 
-            terrain.model.vertices = []
-            terrain.model.colors = []
-            for z, column in enumerate(terrain.model.height_values):
+            terrain.text.vertices = []
+            terrain.text.colors = []
+            for z, column in enumerate(terrain.text.height_values):
                 for x, row in enumerate(column):
-                    terrain.model.vertices.append(Vec3(x/w, terrain.model.height_values[x][z], z/h) + Vec3(centering_offset.x, 0, centering_offset.y))
+                    terrain.text.vertices.append(Vec3(x / w, terrain.text.height_values[x][z], z / h) + Vec3(centering_offset.x, 0, centering_offset.y))
                     # terrain.model.colors.append(hsv(0, 0, 1-(terrain.model.height_values[x][z]*1)))
-                    y = int(terrain.model.height_values[x][z]*16)
+                    y = int(terrain.text.height_values[x][z] * 16)
                     y = clamp(y, 0, 255)
-                    terrain.model.colors.append(gradient[y])
+                    terrain.text.colors.append(gradient[y])
 
-            terrain.model.generate()
+            terrain.text.generate()
 
     pos = cursor.get_position(relative_to=terrain) + Vec3(.5,0,.5)
     if pos.x >= 0 and pos.x < 1 and pos.z >= 0 and pos.z < 1:
         pos *= Vec3(w,0,h)
         # print(int(pos.x), int(pos.z))
-        cursor.y = terrain.model.height_values[int(pos.x)][int(pos.z)]
+        cursor.y = terrain.text.height_values[int(pos.x)][int(pos.z)]
         x, _, z = pos
         # print(floor(x), floor(z))
 
-        height_values = terrain.model.height_values
+        height_values = terrain.text.height_values
         point =     height_values[int(floor(x))][int(floor(z))]
         point_e =   height_values[int(min(w-1, ceil(x)))][int(floor(z))]
         point_n =   height_values[int(floor(x))][int(min(h-1, ceil(z)))]

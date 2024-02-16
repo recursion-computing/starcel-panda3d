@@ -17,5 +17,5 @@ class SetModelHandler(MessageHandler):
         data = self.message.data
         core.instance.messenger.send(
             Event.UNIT_MODEL_RECEIVED,
-            sentArgs=[data.id, data.model],
+            sentArgs=[data.id, data.text],
         )

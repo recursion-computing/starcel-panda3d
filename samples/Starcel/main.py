@@ -6,7 +6,7 @@ from direct.showbase.ShowBase import ShowBase
 from panda3d.core import *
 from direct.showbase import Loader
 import gltf
-
+import clr
 
 # import direct.directbase.DirectStart
 # from direct.gui.OnscreenText import OnscreenText
@@ -20,6 +20,15 @@ from skimage.measure import marching_cubes
 import scipy.sparse.linalg
 import time, uuid, copy, asyncio
 from threading import Thread, Timer
+
+clr.AddReference('C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\TCLRayneoAir2CLIBroadcaster.sln')
+clr.AddReference('C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\TCLRayneoAir2CLIBroadcaster')
+clr.AddReference('C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\XRSDK.dll')
+sys.path.append("C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\bin\Debug\\net6.0")
+clr.AddReference("TCLRayneoAir2CLIBroadcaster.dll")
+from FfalconXR.Native import XRSDK
+#from TCLRayneoAir2CLIBroadcaster import
+
 
 # Change to the current directory
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
@@ -45,6 +54,9 @@ class StdoutHandler:
     def flush(self):
         self._handled_stdout.flush()
 
+
+
+my_instance = XRSDK()
 
 
 class MainApp(ShowBase):

@@ -8,7 +8,7 @@ app = Ursina()
 window.color = color._16
 cursor = Entity(parent=camera.ui, model=Circle(12), color=color.azure, scale=.05, y=.1)
 text = Text(parent=cursor, text='x', z=-1, world_scale=25, y=1.25, origin=(0,0))
-mesh = Entity(parent=camera.ui, model=Mesh(mode='point', thickness=10), color=color.white).model
+mesh = Entity(parent=camera.ui, model=Mesh(mode='point', thickness=10), color=color.white).text
 # undo_cache = [color.random_color() for e in range(1)]
 undo_cache = list()
 undo_cache.append(color.random_color())
