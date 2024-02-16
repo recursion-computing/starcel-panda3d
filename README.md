@@ -44,7 +44,7 @@ You can fix your PyCharm IDE syntax highlighting by modifying the builtins file 
 <details>
   <summary>Something like this, </summary>
   <p>
-    ```
+```
 from panda3d.core import NodePath, VirtualFileSystem
 from direct.showbase.ShowBase import ShowBase
 from direct.directnotify.DirectNotify import DirectNotify
