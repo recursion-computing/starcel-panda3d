@@ -21,6 +21,9 @@ datashader, bokeh, matplotlib, seaborn,
 * Everything and ES CLI for quickly searching the Windows file system
 * WinPython: Not intended for use with StarcelPy - IDLE, IPython QT Console, Jupyter, Pyzo, QT, Spyder, VS Code
 
+### How to run
+Run the program by running both ```python render_pipeline\samples\Starcel\server.py``` and ```python render_pipeline\samples\Starcel\client.py``` you can run as many clients as you want, but full replication of those clients and a full compiled release is currently a WIP. 
+
 ### Notes
 Ursina would've been nice to use for the extra functions, improved readability, and new networking library, but I was unable to find a physically-based renderer that would consistently work with it.
 There is a bug I had to work around with the M_Relative that should be fixed in Panda3D 11.0. \
@@ -31,7 +34,7 @@ You should be able to launch a dedicated server and port forward Starcel in your
 Most of the features you saw in the UE5 version of Starcel are possible in this version of Starcel. With time they will be implemented and improved.\
 A major refactor is coming soon. I usually write a bunch of code until I get it into a state I consider working and then I prune away all the excess code I commented out during testing, I fix the variable names, and I refactor the code into proper files. \
 This project is entirely open source, so maybe you'll get to the refactor before I do. \
-Feel free to submit any pull request and I might adopt your changes. \
+Feel free to submit any pull request and I might adopt your changes. 
 
 
 Panda3D can be installed from https://docs.panda3d.org/1.10/python/introduction/installation-windows and you may want to include a panda.pth file with the following text at the same level as python.exe if you plan on using an external python environment
@@ -44,6 +47,7 @@ You can fix your PyCharm IDE syntax highlighting by modifying the builtins file 
 <details>
   <summary>Something like this, </summary>
   <p>
+
 ```
 from panda3d.core import NodePath, VirtualFileSystem
 from direct.showbase.ShowBase import ShowBase
@@ -64,8 +68,4 @@ hidden: NodePath
 loader: Loader
 vfs: VirtualFileSystem
 ```
-  </p>
-</details>
 copied into ``pycharm_Install_Path/plugins/python/helpers/typeshed/stdlib/builtins.pyi``. 
-
-Run the program by running both ```python render_pipeline\samples\Starcel\server.py``` and ```python render_pipeline\samples\Starcel\client.py``` you can run as many clients as you want, but full replication of those clients is currently a WIP. 
