@@ -19,7 +19,7 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 # Insert the pipeline path to the system path, this is required to be
 # able to import the pipeline classes
-pipeline_path = "../../"
+pipeline_path = "../../../"
 
 # Just a special case for my development setup, so I don't accidentally
 # commit a wrong path. You can remove this in your own programs.
