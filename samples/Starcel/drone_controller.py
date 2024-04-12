@@ -1,10 +1,10 @@
 from panda3d.core import ModifierButtons, Vec3, PStatClient, Point3, CurveFitter, KeyboardButton, Quat, LVecBase3f, NodePath, LRotation
-from starcelfuncs import FiniteRepetitionSelector, look_at_rotation, Cylinder, KeyboardCapturer
+from starcelfuncs import KeyboardCapturer
+from ndplot import FiniteRepetitionSelector
 from DistributedSmoothActor import DistributedSmoothActor
 
 class DroneController():
     def __init__(self, client_repository):
-        #base = showbase
         self.movement = [0, 0, 0]
         self.velocity = Vec3(0.0)
         self.hpr_movement = [0, 0]
@@ -42,7 +42,6 @@ class DroneController():
         self.drone = DistributedSmoothActor(self.client_repository)
         self.keyboard_capturer = KeyboardCapturer()
         self.window_moved = False
-        #self.boom_arm = Cylinder((0,0,0),(-2,0,0),0.1,self.drone)
 
         self.boom_pivot = NodePath('boom_pivot')
         self.cam_point = NodePath('cam_point')
@@ -278,27 +277,6 @@ class DroneController():
         # add yourself as an update task which gets executed very early before the rendering
         self.update_task = base.addTask(self.update, "UpdateDroneController", sort=-40)
 
-        # def onWindowEvent(window):
-        #     print("window moved")
-        #     print(window)
-        #     self.window_moved = True
-        #     return
-        #
-        # base.accept(base.win.getWindowEvent(), onWindowEvent)  # window-event
-
-        # # Hotkeys to connect to pstats and reset the initial position
-        # base.accept("1", PStatClient.connect)
-        # base.accept("3", self.reset_to_initial)
-
-    # def update_first_character_quat(self, initial_quat_first, initial_quat_second, changing_quat_second):
-    #     initial_quat_second_inverse = initial_quat_second
-    #     initial_quat_second_inverse.invert_in_place()
-    #     initial_quat_second_conjugate = initial_quat_second.conjugate()
-    #     quat_relative = initial_quat_second_conjugate * changing_quat_second
-    #     initial_quat_first_normalized = initial_quat_first
-    #     initial_quat_first_normalized.normalize()
-    #     quat = quat_relative * initial_quat_first * quat_relative.conjugate()
-    #     return quat
 
     def update_first_character_quat(self, initial_quat_first, initial_quat_second, changing_quat_second):
         quat_relative = initial_quat_first - initial_quat_second
@@ -315,7 +293,7 @@ class DroneController():
         return panda3d_quaternion
 
 
-    def update_offsets(self):
+    def update_mouse_offsets(self):
         x = base.mouseWatcherNode.get_mouse_x()
         y = base.mouseWatcherNode.get_mouse_y()
         self.current_mouse_pos = (x * base.camLens.get_fov().x * self.mouse_sensivity,
@@ -382,172 +360,38 @@ class DroneController():
                     self.cam_point.set_pos((0,-self.freelook_distance, 0))
 
                     # self.boom_arm.update((0,0,0), np.array([-self.freelook_distance, 0, 0]),.1)
-
-                    # self.drone.getPos(),np.array([self.freelook_distance,0,0]),.1) #self.drone.getPos(), np.array(self.drone.getPos()) + np.array([0,self.freelook_distance,0]), 1)
-
                     base.camera.setPos(render.getRelativePoint(self.boom_pivot, self.cam_point.get_pos()))
 
                     base.camera.look_at(self.drone.get_pos())
                     self.current_freelook_rot_r = self.current_freelook_rot_r - self.diffx
                     if self.mmb_activated:
                         base.camera.set_r(self.current_freelook_rot_r)
-                    #gyro_values = [gyro_values[3], gyro_values[0], gyro_values[1], gyro_values[2]]
 
                     self.drone.show()
 
                 elif self.firstpersonlook_activated:
-                    # Below is a quaternion brute-forcing graveyard
-                    # with open("D:\gyro.txt", "r") as f:
-                    #     test = f.read()
-                    #     print(test)
-                    #self.counter = self.counter + 1
-                    #base.camera.set_hpr(self.sample_gyro_values[self.counter][0],self.sample_gyro_values[self.counter][1],self.sample_gyro_values[self.counter][2])
-                    #ser_a = serial.Serial(port='COM4', baudrate=115200, timeout=0.01)
-
-
-                    #x = ser_a.readline()
-                    #print("received1: ", x.decode("utf-8"))
-                    #print("received1: ", x.decode("utf-8"))
-
-                    # ser_b = serial.Serial(port='COM5', baudrate=115200, timeout=0.01)
-                    # gyro_value = ser_b.readline().decode("utf-8").strip().replace(" ","").replace("[","").replace("]","").rstrip('\n').rstrip('\r').split(",")
-                    # if gyro_value is not None and gyro_value is not [] and gyro_value is not [''] and len(gyro_value)==3:
-                    #     #print((float(gyro_value[0]),float(gyro_value[1]),float(gyro_value[2])))
-                    #     base.camera.set_hpr(float(gyro_value[0]),float(gyro_value[1]),float(gyro_value[2]))
-
-                    #print(sys.stdin.readline().strip())#self.ser.readlines())
-                    #pass
-                    #parent_conn, child_conn = Pipe()
-                    #p = Process(target=f, args=(child_conn,))
-                    #p.start()
-                    #data_recv = parent_conn.recv()
-                    #buf = self.connection.recv(65536)
-                    #print(buf)
-                    #base.camera.set_hpr()#data_recv[0],data_recv[1],data_recv[2])
                     gyro_values = list(map(float, self.xrsdk.ReadArSensors().split(",")))
                     print(gyro_values)
                     new_quat = self.unity_to_panda3d_quaternion(Quat(gyro_values[0], gyro_values[1], gyro_values[2], gyro_values[3]))
                     flip_rotation = Quat()
                     flip_rotation.setFromAxisAngle(180, Vec3(0, 0, 1))
-                    # flip_rota = Quat()
-                    # flip_rota.setFromAxisAngle(145, Vec3(0, 0, 1))
                     working_gyro_values = (flip_rotation * Quat(new_quat[3], new_quat[0], new_quat[1], new_quat[2]))
                     working_gyro_values.normalize()
-                    # rotation_quat = (working_gyro_values + (self.current_rotation - self.working_current_glasses_rotation)) # this alongside the xrsdk reset on firstpersonfreelook can be used for calibrating an initial look direction
-                    # rotation_quat.set_hpr(rotation_quat.get_hpr()) #attempt to convert quaternion to a unit quaternion
-                    #flip_rota.invert_in_place()
                     vertical_tilt_quat = Quat()
                     vertical_tilt_quat.setFromAxisAngle(-22, (1, 0, 0)) # 22° tilt
                     base.camera.set_quat(working_gyro_values * (vertical_tilt_quat * flip_rotation * self.current_camera_rotation))
-                    # flip_rotb = Quat()
-                    # flip_rotb.setFromAxisAngle(180, Vec3(0, 1, 0))
-
-
-                    # invertquat = Quat(gyro_values[0], gyro_values[1], gyro_values[2], gyro_values[3])
-                    # invertquat.invert_in_place()
-                    # base.camera.set_quat(Quat(gyro_values[0], gyro_values[1], gyro_values[2], gyro_values[3]).multiply(
-                    #     self.current_rotation).multiply(invertquat))
-
-                    # invertquat = Quat(gyro_values[3], gyro_values[0], gyro_values[1], gyro_values[2])
-                    # invertquat.invert_in_place()
-                    # base.camera.set_quat(Quat(gyro_values[3], gyro_values[0], gyro_values[1], gyro_values[2]).multiply(
-                    #     self.current_rotation).multiply(invertquat))
-
-                    # mainquat = Quat(gyro_values[3], gyro_values[0], gyro_values[1], gyro_values[2])
-                    # mainquat.invert_in_place()
-                    # invertedquat = mainquat
-                    # mainquat = Quat(gyro_values[3], gyro_values[0], gyro_values[1], gyro_values[2])
-                    # base.camera.set_quat(mainquat*base.camera.get_quat()*mainquat.conjugate())
-                    #base.camera.set_quat(Quat(gyro_values[3], gyro_values[0], gyro_values[1],gyro_values[2])+self.current_rotation)
-                    #gyro_values_quat = Quat(gyro_values[3], gyro_values[0], gyro_values[1], gyro_values[2])
-
-                    # rotation_quat = self.update_first_character_quat(
-                    #     Quat(self.current_rotation[0], self.current_rotation[1], self.current_rotation[2],
-                    #          self.current_rotation[3]),
-                    #     Quat(self.current_glasses_rotation[0], self.current_glasses_rotation[1],
-                    #          self.current_glasses_rotation[2], self.current_glasses_rotation[3]),
-                    #     Quat(gyro_values[3], gyro_values[0], gyro_values[1], gyro_values[2]))
-
-                    #base.camera.set_quat(base.camera,rotation_quat)
-
-                    #clutched code
-                    #cameraclutch_hpr = rotation_quat.get_hpr()
-
-                    # replace with variables because earlier set_quat overwrites any persisting changes from diff
-                    # if self.mmb_activated:
-                    #     base.camera.set_r(base.camera, - diffx)
-                    # else:
-                    #     base.camera.set_h(base.camera, diffx)
-                    #     base.camera.set_p(base.camera, diffy)
-
-                    #raw_string = self.ss.readline()#.strip().decode()
-                    #print(raw_string)
-
-                    #base.camera.set_quat(rotation_quat)
-
-                    #*Quat(gyro_values[2], gyro_values[3], gyro_values[0], gyro_values[1]))
-
-
-                    #base.camera.set_quat(rotation_quat*Quat(gyro_values[1], gyro_values[2], gyro_values[3], gyro_values[0]))
-                    #rotation_quat.invert_in_place()
-                    #base.camera.set_quat(Quat(gyro_values[1], gyro_values[2], gyro_values[3], gyro_values[0]) * Quat(self.current_rotation[0], self.current_rotation[1], self.current_rotation[2],
-                    #         self.current_rotation[3])) #rotation_quat)
-                    # current_quaternion = Quat()
-                    # current_quaternion.set_hpr(self.drone.get_hpr())
-                    # rotated_quaternion = rotation_quat * current_quaternion * rotation_quat.conjugate()
-                    # base.camera.set_hpr(rotated_quaternion.get_hpr())
-                    # self.drone.set_hpr(rotated_quaternion.get_hpr())
-                    #print(gyro_values)
-                    #print(rotated_r, rotated_p, rotated_h)
-                    #base.camera.set_hpr(rotated_h, rotated_p, rotated_r)
-                    #self.drone.set_hpr(rotated_h, rotated_p, rotated_r)
-                    #base.camera.set_quat(Quat(gyro_values[0],gyro_values[1],gyro_values[2],gyro_values[3]))
-                    #reduce(lambda left, right: left+right ,zip(list(map(float, self.xrsdk.ReadArSensors().split(","))),self.current_rotation))
-                    #base.camera.set_quat(Quat(gyro_values[0],gyro_values[1],gyro_values[2], gyro_values[3])-Quat(self.current_rotation[0],self.current_rotation[1],self.current_rotation[2],self.current_rotation[3]))
-                    #print(gyro_values)
-                    #base.camera.set_hpr(gyro_values[0], gyro_values[1], gyro_values[2])
-                    #self.update_first_character_quat(Quat(self.current_rotation[0],self.current_rotation[1],self.current_rotation[2],self.current_rotation[3]), Quat(self.current_glasses_rotation[0],self.current_glasses_rotation[1],self.current_glasses_rotation[2],self.current_glasses_rotation[3]),Quat(gyro_values[0],gyro_values[1],gyro_values[2], gyro_values[3]))
-
-                    #base.camera.set_quat(self.update_first_character_quat(Quat(self.current_rotation[0],self.current_rotation[1],self.current_rotation[2],self.current_rotation[3]), Quat(self.current_glasses_rotation[0],self.current_glasses_rotation[1],self.current_glasses_rotation[2],self.current_glasses_rotation[3]),Quat(gyro_values[0],gyro_values[1],gyro_values[2], gyro_values[3])))
 
                 else:
                     self.boom_pivot.set_hpr(0,0,0) # hpr = ypr
                     self.drone.hide()
 
                     base.camera.set_pos(self.drone.get_pos())
-                    # if self.mmb_activated:
-                    #     self.drone.setR(self.drone.get_r() - diffx)
-                    # else:
-                    #     self.drone.setH(self.drone.get_h() + diffx)
-                    #     self.drone.setP(self.drone.get_p() - diffy)
-
                     if self.mmb_activated:
                         self.drone.setR(self.drone, - self.diffx)
                     else:
                         self.drone.setH(self.drone, self.diffx)
                         self.drone.setP(self.drone, self.diffy)
                     base.camera.set_quat(self.drone.get_quat())
-                    #print(self.drone.get_quat())
-
-
-                    # quat = LRotation((0,0,0),0)
-                    # if self.mmb_activated:
-                    #     quat *= LRotation((1, 0, 0),self.drone.get_r() -diffx)
-                    # else:
-                    #     quat *= LRotation((0, 0, 1), self.drone.get_h() + diffx)
-                    #     quat *= LRotation((0, 1, 0), self.drone.get_p() - diffy)
-
-                    # self.drone.set_quat(quat)
-                    # base.camera.set_quat(quat)
-
-                    # if self.mmb_activated:
-                    #     self.drone.setR(self.drone.get_r() - diffx)
-                    #     base.camera.set_r(self.drone.getR())
-                    # else:
-                    #     self.drone.setH(self.drone.get_h() + diffx)
-                    #     base.camera.set_h(self.drone.getH())
-                    #     self.drone.setP(self.drone.get_p() - diffy)
-                    #     base.camera.set_p(self.drone.getP())
 
                     # Compute movement in render space
                     movement_direction = (Vec3(self.movement[1], self.movement[0], self.movement[2]) * self.speed * delta * 100.0)
@@ -560,22 +404,11 @@ class DroneController():
                     # translated_direction.add_z(
                     #      * delta * 120.0 * self.speed)
 
-                    self.velocity += translated_direction # * 0.15
+                    self.velocity += translated_direction  # * 0.15
 
                     # apply the new position
                     base.camera.set_pos(base.camera.get_pos() + self.velocity)
                     self.drone.setPos(base.camera.getPos())
-
-                    # test2 = tuple(np.array([2*random.random() -1, 2*random.random() -1, 2*random.random() -1, 2*random.random() -1])*.00001)
-                    # rotation_quat = Quat(test2)
-                    # base.camera.set_quat(base.camera, rotation_quat)
-
-                    # transform rotation (keyboard keys)
-                    # rotation_speed = self.keyboard_hpr_speed * 100.0
-                    # rotation_speed *= delta
-                    # base.camera.set_hpr(
-                    #     base.camera.get_hpr() + Vec3(
-                    #         self.hpr_movement[0], self.hpr_movement[1], 0) * rotation_speed)
 
                     # fade out velocity
                     self.velocity = self.velocity * max(0.0, 1.0 - delta * 60.0 / max(0.001, self.smoothness))
@@ -585,16 +418,7 @@ class DroneController():
                     # print("" + str(base.win.getXSize() / 2) + " " + str(base.win.getYSize() / 2))
                     base.win.movePointer(0, int(base.win.getXSize() / 2), int(base.win.getYSize() / 2))
 
-                    # bobbing
-                    # ftime = self.clock_obj.get_frame_time()
-                    # rotation = (ftime % self.bobbing_speed) / self.bobbing_speed
-                    # rotation = (min(rotation, 1.0 - rotation) * 2.0 - 0.5) * 2.0
-                    # if self.velocity.length_squared() > 1e-5 and self.speed > 1e-5:
-                    #     rotation *= self.bobbing_amount
-                    #     rotation *= min(1, self.velocity.length()) / self.speed * 0.5
-                    # else:
-                    #     rotation = 0
-                    # base.camera.set_r(rotation)
+                    # TODO: fix Quaternion-Based-Bobbing. GPT couldn't fix it.
         return task.cont
 
     def play_motion_path(self, points, point_duration=1.2):
