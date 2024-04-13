@@ -41,6 +41,7 @@ class DroneController():
         self.current_freelook_rot_r = base.camera.get_r()
         self.drone = DistributedSmoothActor(self.client_repository)
         self.keyboard_capturer = KeyboardCapturer()
+        self.stdout_handler = None
         self.window_moved = False
 
         self.boom_pivot = NodePath('boom_pivot')
@@ -206,7 +207,7 @@ class DroneController():
     def clock_obj(self):
         return base.taskMgr.globalClock
 
-    def setup(self):
+    def setup(self):  # Notice how most of these keybinds are for natural movements
         # x
         base.accept("raw-w", self.set_movement, [0, 1])
         base.accept("raw-w-up", self.set_movement, [0, 0])

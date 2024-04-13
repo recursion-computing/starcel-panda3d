@@ -132,7 +132,7 @@ def plot():
     x, y, z = np.pi * np.mgrid[-1:1:7j, -1:1:7j, -1:1:7j]
     vol = np.cos(x) + np.cos(y) + np.cos(z)
     iso_val = 0.0
-    verts, faces, normals, values = marching_cubes(vol, iso_val, spacing=(0.4, 0.4, 0.4))  # The marching cubes algorithm is here for education
+    verts, faces, normals, values = marching_cubes(vol, iso_val, spacing=(0.4, 0.4, 0.4))
     return ("_vertices", [["X=%.3f" % x[0] + " Y=%.3f" % x[1] + " Z=%.3f" % x[2]] for x in verts], "_faces",
             [["X=%s" % x[0] + " Y=%s" % x[1] + " Z=%s" % x[2]] for x in faces], "_normals",
             [["X=%.3f" % x[0] + " Y=%.3f" % x[1] + " Z=%.3f" % x[2]] for x in normals])

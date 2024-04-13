@@ -120,6 +120,7 @@ class MainApp(ShowBase):
         self.render_pipeline.prepare_scene(model)
 
         rice_grain_model = loader.loadModel("models/ricegrainchrome.glb")
+        rice_grain_model.reparent_to(render)
         rice_grain_model_col = rice_grain_model.attachNewNode(CollisionNode('RiceColNode'))
         rice_grain_model_col.node().addSolid(CollisionBox(rice_grain_model.getTightBounds()[0] - rice_grain_model.getPos(), rice_grain_model.getTightBounds()[1] - rice_grain_model.getPos()))
         
@@ -163,20 +164,14 @@ class MainApp(ShowBase):
             global drone
             return SCell(drone,text=text,pos=pos)
 
-
         self.scells = {}
         def spawn_scell_at_player():
-            # print(self.controller.showbase.cam.get_pos(self.controller.showbase.render))
-            #return spawn_scell(pos=self.controller.showbase.cam.get_pos(self.controller.showbase.render))
             self.current_TextNode = spawn_scell(pos=drone.drone.getPos())
 
             self.scells.update({self.current_TextNode.collision_node.getName(): self.current_TextNode})
             return self.current_TextNode
 
         def esc():
-            # entry['focus'] = False
-            # entry._d_entry.guiItem.set_focus(False)
-            # self.hud_bound_textNode = None
             if self.current_scell is not None:
                 self.current_scell.cursor.cursor_shown = False
                 self.current_scell.most_recent_owner.keyboard_capturer.set_active_scell(None)
@@ -221,65 +216,12 @@ class MainApp(ShowBase):
 
         base.accept("t", tour)
 
-        def submit_scell(text):
-            output = None
-
-            # Put this here to comply with local scope. Perhaps this should be replaced with globals or restructured into its own file
-            def scenegraph(_):
-                lsb = LineStream()
-                render.ls(lsb)
-                text = ''
-                while lsb.isTextAvailable():
-                    text += lsb.getLine() + '\n'
-                return text
-
-            self.stdout_handler.last_output = ""
-            input_text = text
-            print(text)
-            parsed = input_text.strip().split(' ')
-            print(locals().keys())
-            if parsed[0] in list(cmdix.listcommands()):  # linux commands
-                output = cmdix.runcommandline(input_text)
-            elif ((parsed[0]) in locals().keys()):  # functions defined in this file
-                print("customfunc called")
-                output = locals()[parsed[0]](parsed[1:])  # TODO: Support for no argument functions
-            else:
-                # print("eval called")
-                try:
-                    output = exec(input_text)  # Executing of receieved statement. Exec relies on the stdout print statements to receive output whereas when this is switched to eval, output is sent back over the socket
-                    # output = repr(self.stdout_handler.last_output)
-                    # print(self.stdout_handler.last_output)
-                except Exception as e:
-                    output = e
-
-            try:
-                if not str(output) or output is None or output == "":
-                    output = repr(self.stdout_handler.last_output)
-            except:
-                pass
-
-            try:
-                print(self.hud_bound_textNode.node())
-                # self.hud_bound_textNode.node().setText(output)
-                pyout = spawn_scell(text=output, pos=self.hud_bound_textNode.getPos() + (0, 0, -2))
-                t = Timer(.02, lambda a, b: a.node().setText(b), (pyout, output,))
-                t.start()
-                print(self.hud_bound_textNode.node())
-            except:
-                pass
-            # self.pyout.node().setText(output)
-            # time.sleep(2)
-
-        # base.accept("shift-enter", submit_scell)
-
 
         # collisiondebugger = CollisionVisualizer("debug")
         # collisiondebugger.reparent_to(render)
         # render.attachNewNode(collisiondebugger)
         # self.render_pipeline.prepare_scene(model)
 
-        # Setup Collision
-        # CollisionTraverser and a Collision Handler is set up
         self.picker = CollisionTraverser()
         # self.picker.showCollisions(render)
         self.pq = CollisionHandlerQueue()
@@ -315,21 +257,10 @@ class MainApp(ShowBase):
                     try:
                         pickedObj = self.pq.getEntry(0).getIntoNodePath()
                         hit_pos = self.pq.getEntry(0).get_surface_point(self.render)
-                        print(hit_pos)
-                        #print(self.pq.getEntry(0).getSurfacePoint(pickedObj))
-                        #print(pickedObj)
-                        # click_plane = Plane(pickedObj.getTightBounds()[0] - pickedObj.getPos(),
-                        #       pickedObj.getTightBounds()[1] - pickedObj.getPos())
-                        # if click_plane.intersectsLine(pos3d, render.getRelativePoint(camera, nearPoint),  render.getRelativePoint(camera, farPoint)):
-                        #     print("intersected at " + str(pos3d))
+                        print(hit_pos)  # click position
+
                         if pickedObj.getName() == "TextColNode":
-                            # if self.current_textNode.textNode.equals(pickedObj.getParent().node()):
-                            #     self.current_textNode
-                            # self.hud_bound_textNode = pickedObj.getParent()
-                            # pickedObj.get_tag("textnode")
-                            # self.current_textNode = pickedObj.getParent().node()
-                            self.current_scell = self.scells.get(pickedObj.getName()) # self.current_textNode.get_python_tag("object")
-                            # self.current_scell.focused = True
+                            self.current_scell = self.scells.get(pickedObj.getName())
                             self.current_scell.cursor.get_click_coordinates(hit_pos)
                             self.current_scell.cursor.cursor_shown = True
 
@@ -338,19 +269,12 @@ class MainApp(ShowBase):
                             os.startfile("C:\Program Files\Google\Chrome\Application\chrome.exe")
                         else:
                             self.win.getProperties().getForeground()
-                            #entry._d_entry.guiItem.set_focus(False)
                             self.current_scell.most_recent_owner.keyboard_capturer.set_active_scell(None)
                             self.current_scell.cursor.cursor_shown = False
-                            # entry['focus'] = False
-                            hud_bound_textNode = None
                     except:
                         pass
                 else:
-                    # self.controller.setup()
                     self.win.getProperties().getForeground()
-                    #entry._d_entry.guiItem.set_focus(False)
-                    # entry['focus'] = False
-                    # self.hud_bound_textNode = None
                     if self.current_scell is not None:
                         self.current_scell.most_recent_owner.keyboard_capturer.set_active_scell(None)
                         self.current_scell.cursor.cursor_shown = False
@@ -362,13 +286,10 @@ class MainApp(ShowBase):
 
         # self.accept(base.win.getWindowEvent(), onWindowEvent)
 
-
         self.updateTask = taskMgr.add(self.update, "update")
 
 
-    # Main Update Loop
     def update(self, task):
-
         return task.cont
 
 
