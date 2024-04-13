@@ -1,4 +1,4 @@
-from panda3d.core import ModifierButtons, Vec3, PStatClient, Point3, CurveFitter, KeyboardButton, Quat, LVecBase3f, NodePath, LRotation
+from panda3d.core import ModifierButtons, Vec3, Point3, CurveFitter, Quat, NodePath
 from starcelfuncs import KeyboardCapturer
 from ndplot import FiniteRepetitionSelector
 from DistributedSmoothActor import DistributedSmoothActor
@@ -53,37 +53,35 @@ class DroneController():
         self.client_repository.createDistributedObject(distObj=self.drone, zoneId=2)
 
         self.xrsdk = None
-        # open serial port (NOTE: change location as needed)
-        #self.ss = serial.Serial("COM5")
-
-        # read string
-        #_ = self.ss.readline()  # first read may be incomplete, just toss it
-
-
-        #self.myaccel = QMI8658_Accelerometer()
         self.counter = 0
-
-        # mouseWatcherNode actually also handles keyboard
-        # self.isDown = base.mouseWatcherNode.is_button_down
-
-        # base.accept("alt", self.alt_down)
-        # base.accept("alt-up", self.alt_up)
-        # base.accept("ctrl", self.ctrl_down)
-        # base.accept("ctrl-up", self.ctrl_up)
 
         self.drone.start()
         self.drone.hide()
 
+    def update_mouse_offsets(self):
+        x = base.mouseWatcherNode.get_mouse_x()
+        y = base.mouseWatcherNode.get_mouse_y()
+        self.current_mouse_pos = (x * base.camLens.get_fov().x * self.mouse_sensivity,
+                                  y * base.camLens.get_fov().y * self.mouse_sensivity)
+
+        if (-self.current_mouse_pos[0] != 0 or self.current_mouse_pos[1] != 0):
+            if (-1 < self.current_mouse_pos[0] < 1 and -1 < self.current_mouse_pos[1] < 1):
+                self.offset_diffx = - self.current_mouse_pos[0]
+                self.offset_diffy = self.current_mouse_pos[1]
+            else:
+                self.offset_diffx = 0
+                self.offset_diffy = 0
+        else:
+            self.offset_diffx = 0
+            self.offset_diffy = 0
 
     def set_initial_position(self, pos, target):
-        """ Sets the initial camera position """
         self.initial_position = pos
         self.initial_destination = target
         self.use_hpr = False
         self.reset_to_initial()
 
     def set_initial_position_hpr(self, pos, hpr):
-        """ Sets the initial camera position """
         self.initial_position = pos
         self.initial_hpr = hpr
         self.use_hpr = True
@@ -94,7 +92,6 @@ class DroneController():
         self.drone.setScale(self.size)
 
     def reset_to_initial(self):
-        """ Resets the camera to the initial position """
         base.camera.set_pos(self.initial_position)
 
         if self.use_hpr:
@@ -202,7 +199,7 @@ class DroneController():
         self.mmb_activated = False
 
     def unbind(self):
-        """ Unbinds the movement controler and restores the previous state """
+        # Unbinds the movement controller and restores the previous state
         raise NotImplementedError()
 
     @property
@@ -210,7 +207,6 @@ class DroneController():
         return base.taskMgr.globalClock
 
     def setup(self):
-        """ Attaches the movement controller and inits the keybindings """
         # x
         base.accept("raw-w", self.set_movement, [0, 1])
         base.accept("raw-w-up", self.set_movement, [0, 0])
@@ -229,14 +225,7 @@ class DroneController():
         base.accept("raw-q", self.set_movement, [2, -1])
         base.accept("raw-q-up", self.set_movement, [2, 0])
 
-        # wireframe + debug + buffer viewer
         # base.accept("f3", base.toggle_wireframe)
-        # base.accept("f11", lambda: base.win.save_screenshot("screenshot.png"))
-        # base.accept("j", self.print_position)
-
-        # mouse
-        # base.accept("mouse1", self.set_mouse_enabled, [True])
-        # base.accept("mouse1-up", self.set_mouse_enabled, [False])
 
         # arrow mouse navigation
         # base.accept("arrow_up", self.set_hpr_movement, [1, 1])
@@ -266,7 +255,6 @@ class DroneController():
         # base.accept("shift-wheel_up", self.shift_wheel_up)
         # base.accept("shift-wheel_down", self.shift_wheel_down)
 
-
         # disable modifier buttons to be able to move while pressing shift for example
         base.mouseWatcherNode.set_modifier_buttons(ModifierButtons())
         base.buttonThrowers[0].node().set_modifier_buttons(ModifierButtons())
@@ -277,11 +265,10 @@ class DroneController():
         # add yourself as an update task which gets executed very early before the rendering
         self.update_task = base.addTask(self.update, "UpdateDroneController", sort=-40)
 
-
     def update_first_character_quat(self, initial_quat_first, initial_quat_second, changing_quat_second):
         quat_relative = initial_quat_first - initial_quat_second
         quat = changing_quat_second + quat_relative
-        return quat #.invert_in_place()
+        return quat
 
     def unity_to_panda3d_quaternion(self,unity_quaternion):
         # Flip Y and Z axes
@@ -292,30 +279,8 @@ class DroneController():
 
         return panda3d_quaternion
 
-
-    def update_mouse_offsets(self):
-        x = base.mouseWatcherNode.get_mouse_x()
-        y = base.mouseWatcherNode.get_mouse_y()
-        self.current_mouse_pos = (x * base.camLens.get_fov().x * self.mouse_sensivity,
-                                  y * base.camLens.get_fov().y * self.mouse_sensivity)
-
-        if (-self.current_mouse_pos[0] != 0 or self.current_mouse_pos[1] != 0):
-            if (-1 < self.current_mouse_pos[0] < 1 and -1 < self.current_mouse_pos[1] < 1):
-                self.offset_diffx = - self.current_mouse_pos[0]
-                self.offset_diffy = self.current_mouse_pos[1]
-            else:
-                self.offset_diffx = 0
-                self.offset_diffy = 0
-        else:
-            self.offset_diffx = 0
-            self.offset_diffy = 0
-
-
-
     def update(self, task):
         delta = self.clock_obj.get_dt()
-
-        #print(self.test_gyro.read_xyz())
 
         # Update mouse first
         if base.mouseWatcherNode.has_mouse():
@@ -323,7 +288,6 @@ class DroneController():
             y = base.mouseWatcherNode.get_mouse_y()
             self.current_mouse_pos = (x * base.camLens.get_fov().x * self.mouse_sensivity,
                                       y * base.camLens.get_fov().y * self.mouse_sensivity)
-
 
             if not self.mouse_enabled:
                 self.diffx = -self.current_mouse_pos[0] - self.offset_diffx  # TODO: FIX with M_relative in 11.0 (self.last_mouse_pos[0] -
@@ -417,7 +381,6 @@ class DroneController():
                 if not self.mouse_enabled:
                     # print("" + str(base.win.getXSize() / 2) + " " + str(base.win.getYSize() / 2))
                     base.win.movePointer(0, int(base.win.getXSize() / 2), int(base.win.getYSize() / 2))
-
                     # TODO: fix Quaternion-Based-Bobbing. GPT couldn't fix it.
         return task.cont
 

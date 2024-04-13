@@ -1,6 +1,6 @@
 from p10ga_py import *
 import numpy as np
-from skimage.measure import marching_cubes  # The marching cubes algorithm is here for education
+from skimage.measure import marching_cubes  # The marching cubes algorithm is only here for education
 
 # In absence of order, consider repetition repeats
 class FiniteRepetitionSelector:

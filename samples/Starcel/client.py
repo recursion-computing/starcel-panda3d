@@ -46,19 +46,19 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 global drone
 
 
-
-
-
-# TODO: Rework the syntax for the mouse hovering, clicking of objects, and the keyboard input system
+# TODO: Rework the syntax for the mouse hovering, clicking of objects, and the keyboard input system to be more human-oriented
 class MainApp(ShowBase):
     # Setup window size, title and so on
     load_prc_file_data("", """
     win-size 1600 900
     window-title Starcel
-    """) # fullscreen #t # be sure to update window size when changing to fullscreen
+    """)  # fullscreen #t # be sure to update window size when changing to fullscreen
 
     def __init__(self):
-        def getalias():
+        super().__init__()
+        words = {}  # Words/Function/Command/Formula/Script/Action/Verb/Alias/Procedure/Algorithm Name
+
+        def get_available_functions():  # Collect all aliases
             # load aliases from csv into xarray
             aliasfunctions = xr.DataArray(
                 np.loadtxt("C:/Users/xnick/Documents/Unreal Projects/starcel/Content/SCfiles/data/aliasfunctions.csv",
@@ -70,21 +70,18 @@ class MainApp(ShowBase):
             flat_list = [item for sublist in [func.split('/') for func in np.array(available_functions)] for item in sublist]
             return flat_list  # available_functions
 
-        # Collect all aliases
-        # test_keys = np.array(getalias()).tolist()
-        # print(test_keys)
-        words = {}  # Words/Function/Command/Formula/Script/Action/Verb/Alias/Procedure/Algorithm Name
-        for key in getalias():
-            words[key] = {}
-
         def autocomplete(words, search_word):
             autocomplete = fast_autocomplete.AutoComplete(words=words)
             ac_output = []
             if search_word:
                 ac_output = autocomplete.search(word=search_word[0])
-            # print(ac_output)
             # return [''.join(x) for x in ac_output]
-            return ['_autocomplete'] + ac_output
+            return ac_output
+
+        def get_alias(search_word):
+            for key in get_available_functions():
+                words[key] = {}
+            autocomplete(words,search_word)
 
         # Render Pipeline setup
         pipeline_path = "../../"
@@ -96,9 +93,8 @@ class MainApp(ShowBase):
 
         self.render_pipeline = RenderPipeline()
         self.render_pipeline.create(self)
-        # base.camLens.set_near(.01)
+
         # self.render.set_shader_auto()
-        # gltf.patch_loader(self.loader)
 
         # Set time of day
         self.render_pipeline.daytime_mgr.time = 0
@@ -113,82 +109,26 @@ class MainApp(ShowBase):
             drone.mouse_enabled = self.mouse_activated
             drone.setup()
 
-
         base.accept("client-joined", clientJoined)
 
         # Scene Setup
-        # Load test scene
-        # Load files with python -m blend2bam 1.blend 2.bam
-        # Transparency in .blend not working, .egg should work
+        # Convert blender files to bam files using python -m blend2bam TestScene.blend TestScene.bam
         model = loader.loadModel("scene/TestScene.bam")
         model.reparent_to(render)
-        model.setPos(0, 0, -10)
+        model.setPos(0, 0, 0)
         model.node().setIntoCollideMask(BitMask32.bit(1))
         self.render_pipeline.prepare_scene(model)
 
-        model2 = loader.loadModel("models/coordinate2.bam")  # y and z are flipped
-        print(type(model2))
-        model2.reparent_to(render)
-        model2.setScale(1)
-        model2.setPos(model2, 0, 0, 0)
-
-        model4 = loader.loadModel("models/car.bam")
-        model4.reparent_to(render)
-        model4.setScale(2.5)
-        model4.setHpr(215, 0, 0)
-        model4.set_pos(0, -25, -10.3)
-        self.render_pipeline.prepare_scene(model4)
-
-        model5 = loader.loadModel("models/DroneSphereRot.bam")
-        model5.reparent_to(render)
-        model5.setHpr(45,90,135)
-        model5.setScale(.05)
-        model5.setPos(model5.getPos() + render.getRelativeVector(model5, Vec3(0, 1, 0)).normalized()*3)
-
-        self.model6 = loader.loadModel("models/rice_bowl.glb")
-        self.model6.set_scale(1.5)
-        self.model6.set_pos(0,0,9)
-        self.model6.reparent_to(render)
-
-        # # rotation code ported from https://github.com/pokepetter
-        # self.rice_rot = 0
-        # self.rings = []
-        # self.rices = []
-        # self.pivot = render.attachNewNode('pivot')
-        # num_of_rice=11
-        # for z in range(1,5):
-        #     ring = render.attachNewNode('ring')
-        #     ring.set_scale(z*3)
-        #     self.rings.append(ring)
-        #     for i in range(num_of_rice):
-        #         self.pivot.set_h(i * 360 // num_of_rice)
-        #         rice_grain_model = loader.loadModel("models/ricegrain.glb")
-        #         if (z * num_of_rice) + i == 34:
-        #             rice_grain_model = loader.loadModel("models/ricegrainchrome.glb")
-        #             rice_grain_model_col = rice_grain_model.attachNewNode(CollisionNode('RiceColNode'))
-        #             rice_grain_model_col.node().addSolid(CollisionBox(rice_grain_model.getTightBounds()[0] - rice_grain_model.getPos(), rice_grain_model.getTightBounds()[1] - rice_grain_model.getPos()))#CollisionBox(e.getTightBounds()[0] / 50, e.getTightBounds()[1] / 50))
-        #         rice_grain_model.reparent_to(self.pivot)
-        #         rice_grain_model.set_x(((z * z) + 3) * .16)
-        #         rice_grain_model.set_scale(max(.2 * math.pow(z,.9) *.1, .01))
-        #         if (z * num_of_rice) + i == 34:
-        #             rice_grain_model.set_scale(rice_grain_model.get_scale()*10)
-        #         old_pos = rice_grain_model.get_pos()
-        #         old_pos = render.getRelativePoint(self.pivot, old_pos)
-        #         old_scale = rice_grain_model.get_scale()
-        #         #old_hpr = e.get_hpr()
-        #         rice_grain_model.reparent_to(ring)#e.world_parent = ring
-        #         #e.set_scale(old_scale)
-        #         rice_grain_model.set_pos(old_pos)
-        #         #rice_grain_model.set_hpr(random()*360,random()*360,random()*360)
-        #         self.rices.append(rice_grain_model)
-
-
+        rice_grain_model = loader.loadModel("models/ricegrainchrome.glb")
+        rice_grain_model_col = rice_grain_model.attachNewNode(CollisionNode('RiceColNode'))
+        rice_grain_model_col.node().addSolid(CollisionBox(rice_grain_model.getTightBounds()[0] - rice_grain_model.getPos(), rice_grain_model.getTightBounds()[1] - rice_grain_model.getPos()))
+        
         self.ambientLight = self.render.attachNewNode(AmbientLight('ambient'))
         self.ambientLight.node().setColor((0.1, 0.1, 0.1, 1))
         self.render.setLight(self.ambientLight)
 
-
         self.mouse_activated = False
+
         def set_relative_mode_and_hide_cursor():
             props = WindowProperties()
             props.setCursorHidden(True)

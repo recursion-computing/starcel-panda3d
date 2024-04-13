@@ -133,7 +133,6 @@ class KeyboardCapturer:
         self.buffer = ""
 
 
-
 class StdoutHandler:  # Used to capture stdout data printed to console
     def __init__(self):
         self.last_output = ""

@@ -19,13 +19,17 @@ datashader, bokeh, matplotlib, seaborn
 
 ### Included CLI Tools
 * Everything and ES CLI for quickly searching the Windows file system
+* FFmpeg for editing audio and video
+* dlp for downloading videos
 * WinPython: Not intended for use with StarcelPy - IDLE, IPython QT Console, Jupyter, Pyzo, QT, Spyder, VS Code
 
 ### How to run
-Run the program by running both ```python render_pipeline\samples\Starcel\server.py``` and ```python render_pipeline\samples\Starcel\client.py``` you can run as many clients as you want, but full replication of those clients and a full compiled release is currently a WIP. 
+Run the program by executing ```python render_pipeline\samples\Starcel\server.py``` and ```python render_pipeline\samples\Starcel\client.py``` you can run as many clients as you want, but full replication of those clients and a full compiled release is currently a WIP. 
 
 ### Notes
-Ursina would've been nice to use for the extra functions, improved readability, and new networking library, but I was unable to find a physically-based renderer that would consistently work with it and imported objects.
+To change the background image or loading screen edit data/builtin_models/skybox/skybox.jpg and data/gui/loading_screen_bg.png. After editing, run render_pipeline\data\generate_txo_files.py. 
+Using the project Ursina would have been useful for the extra functions, improved readability, and new networking library, but I was unable to find a physically-based renderer that would consistently work with it and imported objects. \
+Awaiting a working release of Astron for networking or equivalent. \
 There is a bug I had to work around with the M_Relative that should be fixed in Panda3D 11.0. \
 The releases section will eventually include Starcel packaged with WinPython. \
 This repo is a fork of the RenderPipeline repo because the startup image and environment hdri cannot be changed at runtime. Otherwise you should be able to just copy the Starcel folder if you were planning on trying to build renderpipeline from scratch. I have included every existing usable sample I could find for Panda3D(1/1/2024) and renderpipeline. \
@@ -36,9 +40,23 @@ A major refactor is coming soon. I usually write a bunch of code until I get it 
 This project is entirely open source, so maybe you'll get to the refactor before I do. \
 Feel free to submit any pull request and I might adopt your changes. 
 
-### Planned Features
+### TODO and Planned Features
 *Most not listed here*
-file browser to replace windows explorer and nautilis
+File browser to replace windows explorer and nautilis
+Load desktop folder
+I recommend using thonny as a starting point for IDE development, tkinter is native to python
+implement multivariable replacement to quickly replace variable names in a function with a preset list of variables
+As inspiration for spreadsheet and table development, recall the starting point of a 2d spreadsheet exists in a slice of the octant of a 3d spreadsheet class object
+Add player alignment tools
+Add node dragging and alignment tools 
+Fix loading transparent models bug
+Implement https://sceditor.recursion.is menus
+Implement technical details from video
+Fix wysiwyg text editing
+Add everything search exe as a function and filter for apps and shortcuts
+Build exe and test python runtime to reshell windows
+Restructure and refactor code
+Autoswap desktop background and startup image
 
 
 ### Other Installations
