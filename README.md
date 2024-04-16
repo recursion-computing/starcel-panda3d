@@ -24,7 +24,7 @@ datashader, bokeh, matplotlib, seaborn
 * WinPython: Not intended for use with StarcelPy - IDLE, IPython QT Console, Jupyter, Pyzo, QT, Spyder, VS Code
 
 ### How to run
-Run the program by executing ```python render_pipeline\samples\Starcel\server.py``` and ```python render_pipeline\samples\Starcel\main.py``` you can run as many clients as you want, but full replication of those clients and a full compiled release is currently a WIP. 
+Run the program by executing ```python render_pipeline\Starcel\server.py``` and ```python render_pipeline\Starcel\client.py``` you can run as many clients as you want, but full replication of those clients and a full compiled release is currently a WIP. 
 
 ### Notes
 To change the background image or loading screen edit data/builtin_models/skybox/skybox.jpg and data/gui/loading_screen_bg.png. After editing, run render_pipeline\data\generate_txo_files.py. 
