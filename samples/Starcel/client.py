@@ -6,12 +6,7 @@ from panda3d.core import *
 # from panda3d.core import Vec3, load_prc_file_data, KeyboardButton, NodePath, PandaNode, TextNode
 # import gltf
 
-# import direct.directbase.DirectStart
-from direct.gui.DirectGui import *
-from direct.gui.OnscreenText import OnscreenText
-from inputfield import InputField
-
-import os, sys, math, socket, subprocess, cmdix, xarray as xr, numpy as np, fast_autocomplete, dill
+import os, sys, math, socket, subprocess, cmdix, xarray as xr, numpy as np, dill
 from random import random, randint, seed
 from p10ga_py import *
 from skimage.measure import marching_cubes
@@ -22,29 +17,29 @@ from threading import Thread, Timer
 import copy
 import limeade
 from drone_controller import DroneController
-from starcelfuncs import FiniteRepetitionSelector, look_at_rotation, SCell
+from starcelfuncs import SCell
+
+import fast_autocomplete
+import cmdix
+import subprocess
+import mypythoncmdfuncs
 
 import clr
-# XRSDK setup and a small reminder of how much brute-forcing went into every development step of this program
-# clr.AddReference('C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\TCLRayneoAir2CLIBroadcaster.sln')
-# clr.AddReference('C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\TCLRayneoAir2CLIBroadcaster')
-# clr.AddReference('C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\XRSDK.dll')
-# clr.AddReference("C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\bin\Debug\\net6.0\\TCLRayneoAir2CLIBroadcaster.dll")
-# clr.AddReference("C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLIBroadcaster\\bin\Debug\\net6.0\\)
-sys.path.append("C:\\Users\\xnick\\source\\repos\\TCLRayneoAir2CLI\\bin\\Debug\\net7.0\\")
+sys.path.append("C:\\Users\\xnick\\Documents\\Personal\\_git\\TCLRayneoAir2CLI\\bin\\Debug\\net7.0\\")
 clr.AddReference("TCLRayneoAir2CLI")
 # print(clr._available_namespaces)
 from FfalconXR import XRSDK  # syntax highlighter may not highlight errors
-
 myXRSDK = XRSDK()
 # print(dir(XRSDK))
-myXRSDK.XRSDK_Init()
+myXRSDK.XRSDK_Init()  # The purpose of this is to get the four quaternion values from the AR glasses.
 
 # Change to the current directory
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 global drone
 
+
+# TODO: Rename to client/main
 
 # TODO: Rework the syntax for the mouse hovering, clicking of objects, and the keyboard input system to be more human-oriented
 class MainApp(ShowBase):
@@ -55,37 +50,23 @@ class MainApp(ShowBase):
     """)  # fullscreen #t # be sure to update window size when changing to fullscreen
 
     def __init__(self):
-        super().__init__()
-        words = {}  # Words/Function/Command/Formula/Script/Action/Verb/Alias/Procedure/Algorithm Name
-
-        def get_available_functions():  # Collect all aliases
-            # load aliases from csv into xarray
+        # Collect all Words/Function/Command/Formula/Script/Action/Verb/Alias/Procedure/Algorithm Names
+        def get_available_functions():
+            # load aliases from csv into xarray, xarray has netcdf format, which is built on hdf5 format.
+            # These are the best formats for storing and interfacing with multidimensional data
+            # TODO: Wrap API for xarray to be natural
             aliasfunctions = xr.DataArray(
-                np.loadtxt("C:/Users/xnick/Documents/Unreal Projects/starcel/Content/SCfiles/data/aliasfunctions.csv",
+                np.loadtxt("aliasfunctions.csv",  # it is important to understand that no field is required to be filled out
                            delimiter=",", dtype=str))
             available_functions = aliasfunctions.isel(dim_1=0)[1:]
             # print([func.split('/') for func in available_functions])
-            for function in np.array(available_functions):
-                print("'" + function + "'" + ",")
-            flat_list = [item for sublist in [func.split('/') for func in np.array(available_functions)] for item in sublist]
-            return flat_list  # available_functions
-
-        def autocomplete(words, search_word):
-            autocomplete = fast_autocomplete.AutoComplete(words=words)
-            ac_output = []
-            if search_word:
-                ac_output = autocomplete.search(word=search_word[0])
-            # return [''.join(x) for x in ac_output]
-            return ac_output
-
-        def get_alias(search_word):
-            for key in get_available_functions():
-                words[key] = {}
-            autocomplete(words,search_word)
+            # for function in np.array(available_functions):
+            #     print("'" + function + "'" + ",")
+            flat_list = [item for sublist in [func.split('/') for func in np.array(available_functions)] for item in sublist]  # Recall that a slash is simply a delimiter, just as the border between two spreadsheet cells
+            return flat_list
 
         # Render Pipeline setup
         pipeline_path = "../../"
-
         sys.path.insert(0, pipeline_path)
 
         from rpcore import RenderPipeline, SpotLight
@@ -93,13 +74,12 @@ class MainApp(ShowBase):
 
         self.render_pipeline = RenderPipeline()
         self.render_pipeline.create(self)
-
         # self.render.set_shader_auto()
 
         # Set time of day
         self.render_pipeline.daytime_mgr.time = 0
 
-        # initialize the client
+        # Initialize the client
         client = GameClientRepository()
         def clientJoined():
             global drone
@@ -113,7 +93,7 @@ class MainApp(ShowBase):
 
         # Scene Setup
         # Convert blender files to bam files using python -m blend2bam TestScene.blend TestScene.bam
-        model = loader.loadModel("scene/TestScene.bam")
+        model = loader.loadModel("scene/TestScene.bam")  # The ":pgraphnodes(error): PointLight" error message is a minor issue with one of the objects
         model.reparent_to(render)
         model.setPos(0, 0, 0)
         model.node().setIntoCollideMask(BitMask32.bit(1))
@@ -128,8 +108,7 @@ class MainApp(ShowBase):
         self.ambientLight.node().setColor((0.1, 0.1, 0.1, 1))
         self.render.setLight(self.ambientLight)
 
-        self.mouse_activated = False
-
+        # Keyboard Functions: functions that run on specific keyboard keys
         def set_relative_mode_and_hide_cursor():
             props = WindowProperties()
             props.setCursorHidden(True)
@@ -145,6 +124,7 @@ class MainApp(ShowBase):
             props.setMouseMode(WindowProperties.M_absolute)
             base.win.requestProperties(props)
 
+        self.mouse_activated = False
         def toggle_mouse_mode():
             global drone
             if self.mouse_activated:
@@ -160,16 +140,18 @@ class MainApp(ShowBase):
                 drone.update_mouse_offsets()
                 normal_mouse_mode()
 
-        def spawn_scell(pos, text="="):
+        def spawn_scell(pos, text="desktop()"):
             global drone
             return SCell(drone,text=text,pos=pos)
 
+        self.current_scell = None
         self.scells = {}
         def spawn_scell_at_player():
-            self.current_TextNode = spawn_scell(pos=drone.drone.getPos())
+            global drone
+            self.current_scell = spawn_scell(pos=drone.drone.getPos())
 
-            self.scells.update({self.current_TextNode.collision_node.getName(): self.current_TextNode})
-            return self.current_TextNode
+            self.scells.update({self.current_scell.collision_node.getName(): self.current_scell})
+            return self.current_scell
 
         def esc():
             if self.current_scell is not None:
@@ -185,16 +167,13 @@ class MainApp(ShowBase):
                 wp.set_size(1600,900)
                 wp.setFullscreen(1)
                 base.win.requestProperties(wp)
-                # load_prc_file_data("", "fullscreen #t")
             else:
                 self.fullscreen = False
                 wp = WindowProperties()
                 wp.setFullscreen(0)
                 base.win.requestProperties(wp)
-                # load_prc_file_data("", "fullscreen #f")
 
-        def tour():
-            # Camera flythrough
+        def tour():  # Camera fly through
             mopath = (
                 (Vec3(-10.8645000458, 9.76458263397, 2.13306283951), Vec3(-133.556228638, -4.23447799683, 0.0)),
                 (Vec3(-10.6538448334, -5.98406457901, 1.68028640747), Vec3(-59.3999938965, -3.32706642151, 0.0)),
@@ -216,12 +195,87 @@ class MainApp(ShowBase):
 
         base.accept("t", tour)
 
+        def submit_scell():
+            if base.mouseWatcherNode.is_button_down(KeyboardButton.shift()):
+                print("submit_scell clicked")
+                global drone
+                function_classes = []
+                # function_classes.append([func for func in reversed(list(globals().keys())) if not func.startswith('__')])
+                # function_classes.append(locals())
+                function_classes.append([func for func in reversed(list(dir(mypythoncmdfuncs.MyPythonCMDFuncs))) if not func.startswith('__')])
+                # function_classes.append(list(cmdix.listcommands()))
+                # function_classes.append(get_available_functions())
 
-        # collisiondebugger = CollisionVisualizer("debug")
-        # collisiondebugger.reparent_to(render)
-        # render.attachNewNode(collisiondebugger)
-        # self.render_pipeline.prepare_scene(model)
+                print(function_classes)
 
+                words = {}
+                for key in sum(function_classes, []):  # flatten
+                    words[key] = {}
+
+                def autocomplete(words, search_word):
+                    autocomplete = fast_autocomplete.AutoComplete(words=words)
+                    ac_output = []
+                    if search_word:
+                        ac_output = autocomplete.search(word=search_word[0])
+                    # return [''.join(x) for x in ac_output]
+                    return ac_output
+
+                print(autocomplete(words, self.current_scell.text.get_text()))
+
+                output = None
+
+                drone.stdout_handler.last_output = ""
+                input_text = self.current_scell.text.get_text()
+                parsed = input_text.strip().split(' ')
+                if parsed[0] == "cd":
+                    if parsed[1] == "..":
+                        os.chdir(os.path.dirname(os.getcwd()))
+                        print(os.getcwd())
+                    else:
+                        os.chdir(input_text.replace("cd "))
+                        print(os.getcwd())
+                elif parsed[0] in list(cmdix.listcommands()):  # linux commands
+                    output = cmdix.runcommandline(input_text)
+                elif ".exe" in parsed[0]:
+                    cmdstring = [input_text]
+                    self.dlp = subprocess.Popen(
+                        cmdstring,
+                        stdin=subprocess.PIPE,
+                        bufsize=-1,
+                        shell=False,
+                    )
+                elif ((parsed[0]) in function_classes):  # functions defined in this file
+                    print("customfunc called")
+                    # output = locals()
+                else:
+                    try:
+                        # print("Executing of received statement: " + input_text.strip())
+                        def desktop():
+                            mycmds = mypythoncmdfuncs.MyPythonCMDFuncs()
+                            mycmds.desktop()
+
+                        output = exec(input_text.strip())  # Executing of received statement. Exec relies on the stdout print statements to receive output whereas eval would assign the output of the received statement
+                        print(output)
+                        # output = repr(self.stdout_handler.last_output)
+                    except Exception as e:
+                        output = e
+
+                try:
+                    if not str(output) or output is None or output == "":
+                        output = repr(drone.stdout_handler.last_output)
+                except:
+                    pass
+
+                try:
+                    pyout = SCell(drone, text=output, pos=self.current_scell.textNode.getPos() + self.current_scell.textNode.getTightBounds()[1] + (0, 0, -2))
+                except:
+                    pass
+
+        base.accept("enter", submit_scell)  # shift-enter doesn't work, so shift is added as an if condition
+
+        # collision_debugger = CollisionVisualizer("debug")
+        # collision_debugger.reparent_to(render)
+        # render.attachNewNode(collision_debugger)
         self.picker = CollisionTraverser()
         # self.picker.showCollisions(render)
         self.pq = CollisionHandlerQueue()
@@ -235,10 +289,9 @@ class MainApp(ShowBase):
         self.pickerNode.addSolid(self.pickerRay)
         self.picker.addCollider(self.pickerNP, self.pq)
 
-        self.current_scell = None
         def mouseTask():
             print('mouse click')
-            #limeade.refresh()
+            # limeade.refresh()
             # check if we have access to the mouse
             if base.mouseWatcherNode.hasMouse():
                 # get the mouse position
@@ -258,15 +311,15 @@ class MainApp(ShowBase):
                         pickedObj = self.pq.getEntry(0).getIntoNodePath()
                         hit_pos = self.pq.getEntry(0).get_surface_point(self.render)
                         print(hit_pos)  # click position
-
-                        if pickedObj.getName() == "TextColNode":
+                        if "TextColNode" in pickedObj.getName():
                             self.current_scell = self.scells.get(pickedObj.getName())
                             self.current_scell.cursor.get_click_coordinates(hit_pos)
                             self.current_scell.cursor.cursor_shown = True
-
                             self.current_scell.most_recent_owner.keyboard_capturer.set_active_scell(self.current_scell)  # TODO: Fix all that dirty code, lol
-                        elif pickedObj.getName() == "RiceColNode":
+                        elif "RiceColNode" in pickedObj.getName():
                             os.startfile("C:\Program Files\Google\Chrome\Application\chrome.exe")
+                        elif "IconColNode" in pickedObj.getName():
+                            os.startfile(mypythoncmdfuncs.allicons[pickedObj.getName()].url)
                         else:
                             self.win.getProperties().getForeground()
                             self.current_scell.most_recent_owner.keyboard_capturer.set_active_scell(None)

@@ -1,27 +1,28 @@
-import numpy as np
 from panda3d.core import *
 from direct.interval.IntervalGlobal import *
 import uuid
 import sys
-import cmdix
 
-class SCell:
+# TODO: Rename to text object
+
+class SCell():  # Unfortunately, SCell cannot inherit from TextNode without using a pythonTag to store the ID of the class in the PandaNode, Ursina engine has solved this sub-classing problem, but it doesn't have PBR
     def __init__(self, most_recent_owner, text="=", pos=(0, 0, 0)):
-        # Editable and Submittable 3D Text
         self.focused = False
         self.most_recent_owner = most_recent_owner
+        self.most_recent_owner.keyboard_capturer = KeyboardCapturer()
         self.most_recent_owner.stdout_handler = StdoutHandler()
         self.most_recent_owner.stdout_handler.start()
-        self.font = loader.loadFont("SourceCodePro-Bold.ttf", color=(1, 1, 1, 1), renderMode=TextFont.RMSolid, scaleFactor=23) # .6 1.4
-        self.text = TextNode('Text' + str(uuid.uuid4()))
+        self.font = loader.loadFont("SourceCodePro-Bold.ttf", color=(1, 1, 1, 1), renderMode=TextFont.RMSolid, scaleFactor=23)
+        self.uuid = str(uuid.uuid4())
+        self.text = TextNode('Text' + self.uuid)
         self.text.setText(text)
         self.text.setFont(self.font)
         self.text.setAlign(TextNode.ALeft)
-        self.textNode = render.attachNewNode(self.text)  # text.generate()
+        self.textNode = render.attachNewNode(self.text)
         self.textNode.setPos(pos)
         self.textNode.setScale(1, .1, 1)
         self.textNode.node().setIntoCollideMask(BitMask32.bit(1))
-        self.collision_node = CollisionNode('TextColNode')
+        self.collision_node = CollisionNode('TextColNode' + self.uuid)
         self.fromObject = self.textNode.attachNewNode(self.collision_node)
         # fromObject.show()
         self.fromObject.node().addSolid(CollisionBox(self.textNode.getTightBounds()[0] - self.textNode.getPos(),
@@ -34,45 +35,6 @@ class SCell:
 
         self.cursor = Cursor(len(text),len(text),self)
 
-
-    def submit_scell(self):
-        output = None
-
-        # Put this here to comply with local scope. Perhaps this should be replaced with globals or restructured into its own file
-        def scenegraph(_):
-            lsb = LineStream()
-            render.ls(lsb)
-            text = ''
-            while lsb.isTextAvailable():
-                text += lsb.getLine() + '\n'
-            return text
-
-        self.most_recent_owner.stdout_handler.last_output = ""
-        input_text = self.text
-        parsed = input_text.strip().split(' ')
-        print(locals().keys())
-        if parsed[0] in list(cmdix.listcommands()):  # linux commands
-            output = cmdix.runcommandline(input_text)
-        elif ((parsed[0]) in locals().keys()):  # functions defined in this file
-            print("customfunc called")
-            output = locals()[parsed[0]](parsed[1:])  # TODO: Support for no argument functions
-        else:
-            try:
-                output = exec(input_text)  # Executing of received statement. Exec relies on the stdout print statements to receive output whereas eval would assign the output of the received statement
-                # output = repr(self.stdout_handler.last_output)
-            except Exception as e:
-                output = e
-
-        try:
-            if not str(output) or output is None or output == "":
-                output = repr(self.most_recent_owner.stdout_handler.last_output)
-        except:
-            pass
-
-        try:
-            pyout = SCell(self.most_recent_owner, text=output, pos=self.hud_bound_textNode.getPos() + (0, 0, -2))
-        except:
-            pass
 
 class Cursor:
     def __init__(self, start, end, parent_scell):
@@ -149,8 +111,6 @@ class Cursor:
         model4.setScale(.25)
         model4.setPos(pt2 - self.parent_scell.textNode.getPos())  # self.parent_scell.textNode.getRelativePoint(render, pt2))
         model4.setHpr(self.parent_scell.textNode.get_hpr())
-
-
 
 
 class KeyboardCapturer:

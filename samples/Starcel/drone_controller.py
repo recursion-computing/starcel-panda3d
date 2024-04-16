@@ -1,7 +1,8 @@
 from panda3d.core import ModifierButtons, Vec3, Point3, CurveFitter, Quat, NodePath
-from starcelfuncs import KeyboardCapturer
 from ndplot import FiniteRepetitionSelector
 from DistributedSmoothActor import DistributedSmoothActor
+
+# TODO: Rename to character/camera
 
 class DroneController():
     def __init__(self, client_repository):
@@ -20,7 +21,7 @@ class DroneController():
         self.initial_diffy = 0
         self.offset_diffx = 0
         self.offset_diffy = 0
-        self.mouse_sensivity = 4
+        self.mouse_sensitivity = 4
         self.keyboard_hpr_speed = 1
         self.use_hpr = False
         self.smoothness = .0001
@@ -40,7 +41,7 @@ class DroneController():
         self.freelook_distance = 8
         self.current_freelook_rot_r = base.camera.get_r()
         self.drone = DistributedSmoothActor(self.client_repository)
-        self.keyboard_capturer = KeyboardCapturer()
+        self.keyboard_capturer = None
         self.stdout_handler = None
         self.window_moved = False
 
@@ -62,8 +63,8 @@ class DroneController():
     def update_mouse_offsets(self):
         x = base.mouseWatcherNode.get_mouse_x()
         y = base.mouseWatcherNode.get_mouse_y()
-        self.current_mouse_pos = (x * base.camLens.get_fov().x * self.mouse_sensivity,
-                                  y * base.camLens.get_fov().y * self.mouse_sensivity)
+        self.current_mouse_pos = (x * base.camLens.get_fov().x * self.mouse_sensitivity,
+                                  y * base.camLens.get_fov().y * self.mouse_sensitivity)
 
         if (-self.current_mouse_pos[0] != 0 or self.current_mouse_pos[1] != 0):
             if (-1 < self.current_mouse_pos[0] < 1 and -1 < self.current_mouse_pos[1] < 1):
@@ -113,6 +114,7 @@ class DroneController():
 
     def alt_up(self):
         self.freelook_activated = False
+        self.xrsdk.Reset()
 
     def ralt_down(self):
         self.pre_reset_glasses_rotation = list(map(float, self.xrsdk.ReadArSensors().split(",")))
@@ -287,8 +289,8 @@ class DroneController():
         if base.mouseWatcherNode.has_mouse():
             x = base.mouseWatcherNode.get_mouse_x()
             y = base.mouseWatcherNode.get_mouse_y()
-            self.current_mouse_pos = (x * base.camLens.get_fov().x * self.mouse_sensivity,
-                                      y * base.camLens.get_fov().y * self.mouse_sensivity)
+            self.current_mouse_pos = (x * base.camLens.get_fov().x * self.mouse_sensitivity,
+                                      y * base.camLens.get_fov().y * self.mouse_sensitivity)
 
             if not self.mouse_enabled:
                 self.diffx = -self.current_mouse_pos[0] - self.offset_diffx  # TODO: FIX with M_relative in 11.0 (self.last_mouse_pos[0] -
@@ -382,7 +384,7 @@ class DroneController():
                 if not self.mouse_enabled:
                     # print("" + str(base.win.getXSize() / 2) + " " + str(base.win.getYSize() / 2))
                     base.win.movePointer(0, int(base.win.getXSize() / 2), int(base.win.getYSize() / 2))
-                    # TODO: fix Quaternion-Based-Bobbing. GPT couldn't fix it.
+                    # TODO: Fix Quaternion-Based-Bobbing. GPT solutions do not work.
         return task.cont
 
     def play_motion_path(self, points, point_duration=1.2):

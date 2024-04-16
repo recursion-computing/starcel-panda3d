@@ -1,0 +1,6 @@
+"Every row is a new sample in time and can be imagined as an ever-changing color.
+The top row contains colors already identified.",val_1,val_2,val_3,val_4,val_5,val_6,val_7,val_8,val_9,val_10,val_11,val_12,val_13,val_14,val_15,val_16
+Red Sample,1,2,3,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+Green Sample,90,0.2,15,2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+Blue Sample,80,0.1,20,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+Calc Sample ,42,28,30,4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1

@@ -1,13 +1,13 @@
 from direct.distributed.DistributedSmoothNode import DistributedSmoothNode
-from panda3d.core import NodePath
 
 from direct.actor.Actor import Actor
 
+
 class DistributedSmoothActor(DistributedSmoothNode, Actor):
     def __init__(self, cr):
-        Actor.__init__(self, "models/DroneSphereRot.bam",None) # "models/ralph"  # TODO: dronesphererot looks down the y axis currently, but it should be updated to look down the x axis, this requires updating the movement controller
-            #{"run": "models/ralph-run",
-            #"walk": "models/ralph-walk"})
+        Actor.__init__(self, "models/DroneSphereRot.bam", None)  # "models/ralph"
+        # {"run": "models/ralph-run",
+        # "walk": "models/ralph-walk"})
         DistributedSmoothNode.__init__(self, cr)
         self.setCacheable(1)
         self.setScale(1)
