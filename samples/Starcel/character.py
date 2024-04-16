@@ -1,8 +1,7 @@
 from panda3d.core import ModifierButtons, Vec3, Point3, CurveFitter, Quat, NodePath
 from ndplot import FiniteRepetitionSelector
-from DistributedSmoothActor import DistributedSmoothActor
+from src.DistributedSmoothActor import DistributedSmoothActor
 
-# TODO: Rename to character/camera
 
 class DroneController():
     def __init__(self, client_repository):

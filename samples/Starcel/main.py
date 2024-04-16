@@ -1,5 +1,5 @@
 # Networked actor repos
-from ClientRepository import GameClientRepository
+from src.ClientRepository import GameClientRepository
 
 from direct.showbase.ShowBase import ShowBase  # Loader
 from panda3d.core import *
@@ -16,13 +16,13 @@ import time, uuid, copy, asyncio
 from threading import Thread, Timer
 import copy
 import limeade
-from drone_controller import DroneController
-from starcelfuncs import SCell
+from character import DroneController
+from textobject import SCell
 
 import fast_autocomplete
 import cmdix
 import subprocess
-import mypythoncmdfuncs
+import myfunctions
 
 import clr
 sys.path.append("C:\\Users\\xnick\\Documents\\Personal\\_git\\TCLRayneoAir2CLI\\bin\\Debug\\net7.0\\")
@@ -39,10 +39,8 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 global drone
 
 
-# TODO: Rename to client/main
-
 # TODO: Rework the syntax for the mouse hovering, clicking of objects, and the keyboard input system to be more human-oriented
-class MainApp(ShowBase):
+class MainApp(ShowBase):  # Client
     # Setup window size, title and so on
     load_prc_file_data("", """
     win-size 1600 900
@@ -140,7 +138,7 @@ class MainApp(ShowBase):
                 drone.update_mouse_offsets()
                 normal_mouse_mode()
 
-        def spawn_scell(pos, text="desktop()"):
+        def spawn_scell(pos, text="ls(None)"): # mypythoncmdfuncs.MyPythonCMDFuncs().desktop()
             global drone
             return SCell(drone,text=text,pos=pos)
 
@@ -250,10 +248,6 @@ class MainApp(ShowBase):
                 else:
                     try:
                         # print("Executing of received statement: " + input_text.strip())
-                        def desktop():
-                            mycmds = mypythoncmdfuncs.MyPythonCMDFuncs()
-                            mycmds.desktop()
-
                         output = exec(input_text.strip())  # Executing of received statement. Exec relies on the stdout print statements to receive output whereas eval would assign the output of the received statement
                         print(output)
                         # output = repr(self.stdout_handler.last_output)

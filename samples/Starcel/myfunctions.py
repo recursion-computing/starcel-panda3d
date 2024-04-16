@@ -1,11 +1,12 @@
 import subprocess, sys, os, uuid
 from panda3d.core import *  # LineStream
 
-# TODO: Rename to commands/functions
-# TODO: Mirror these function titles and relevant information into the aliasfunctions.csv because it has completely optional titles.
+# TODO: Mirror these function titles and relevant information into a spreadsheet like aliasfunctions.csv because it has strictly optional input fields. See FOAM3 for an example.
 #  In other words, for example, you can create a new entry which only has the inputs and outputs entered, and not the function name; input:wood output:chair.
-#  There is shared data between each function and new aliases can be quickly entered
+#  There is shared data between each function and new aliases can be quickly entered. The user doesn't have to learn new UI to change/shorten a command name.
 # TODO: psutils rendering after building ndplot
+# TODO: Quickswap of blend to bam, hdri, and startup image
+
 
 class MyPythonCMDFuncs:
     def __init__(self):
@@ -29,16 +30,6 @@ class MyPythonCMDFuncs:
             for file in files:
                 if root == os.path.abspath(folder):
                     Icon(os.path.join(root, file), "ricegrainchrome.glb")
-        # files_directories = [os.path.abspath(dir) for dir in os.listdir(folder)]  # files and directories
-        # files = filter(os.path.isfile, os.listdir(folder))  # files only
-        #
-        # for file in files_directories:
-        #     if file in files or file.endswith(".ini"):  # is a file
-        #         Icon(file, "ricegrainchrome.glb")
-        #         print("is a file" + file)
-        #     else:  # is a directory
-        #         Icon(file, "ricegrainchrome.glb")
-        #         print("is a directory" + file)
 
 
     def explorer(self):
@@ -114,14 +105,14 @@ class MyPythonCMDFuncs:
     def search(self, input):
         if not "Everything.exe" in str(subprocess.check_output('tasklist')):
             self.everythingsearch_background_process = subprocess.Popen(
-                self._get_exe_path("Everything Search\\Everything-1.4.1.1024.x64\\Everything.exe"),
+                self.__get_exe_path("Everything Search\\Everything-1.4.1.1024.x64\\Everything.exe"),
                 stdin=subprocess.PIPE,
                 bufsize=-1,
                 shell=False,
             )
 
         self.everythingsearch_cli = subprocess.Popen(
-            self._get_exe_path("Everything Search\\ES-1.1.0.26\\es.exe") + " " + input,
+            self.__get_exe_path("Everything Search\\ES-1.1.0.26\\es.exe") + " " + input,
             stdin=subprocess.PIPE,
             bufsize=-1,
             shell=False,
@@ -130,7 +121,7 @@ class MyPythonCMDFuncs:
 
     def download_video(self, url):
         url = url.split("&")[0] if "youtu" in url else url
-        cmdstring = [self._get_exe_path("dlp.exe"), " -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best\" --no -mtime -o \"Downloads\%(title)s-%(id)s.%(ext)s\"", url]  # Best video and audio
+        cmdstring = [self.__get_exe_path("dlp.exe"), " -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best\" --no -mtime -o \"%(title)s-%(id)s.%(ext)s\"", url]  # Best video and audio
         self.dlp = subprocess.Popen(
             cmdstring,
             stdin=subprocess.PIPE,
@@ -140,7 +131,7 @@ class MyPythonCMDFuncs:
 
     def download_audio(self, url):
         url = url.split("&")[0] if "youtu" in url else url
-        cmdstring = [self._get_exe_path("dlp.exe"), " -f bestaudio --no-mtime --audio-format mp3 --extract-audio -o \"Downloads\%(title)s-%(id)s.%(ext)s\"", url]  # Best Audio Only
+        cmdstring = [self.__get_exe_path("dlp.exe"), " -f bestaudio --no-mtime --audio-format mp3 --extract-audio -o \"%(title)s-%(id)s.%(ext)s\"", url]  # Best Audio Only
         self.dlp = subprocess.Popen(
             cmdstring,
             stdin=subprocess.PIPE,
@@ -164,7 +155,7 @@ class MyPythonCMDFuncs:
 
     def record_screen(self):
         cmdstring = [
-            self._get_exe_path("ffmpeg-master-latest-win64-lgpl\\bin\\ffmpeg.exe") if sys.platform == 'win32' else 'ffmpeg',
+            self.__get_exe_path("ffmpeg-master-latest-win64-lgpl\\bin\\ffmpeg.exe") if sys.platform == 'win32' else 'ffmpeg',
             '-y',  # overwrite file
             '-r', '%f' % 15.0,  # frame rate of encoded video
             '-an',  # no audio
@@ -186,7 +177,7 @@ class MyPythonCMDFuncs:
                 bufsize=-1,
                 shell=False,
             )
-            taskMgr.add(self._recordTask, "ffmpegTask")
+            taskMgr.add(self.__recordTask, "ffmpegTask")
             self.recording_ready = False
         else:
             self.ffmpeg.stdin.close()  # close the pipe so that ffmpeg will close the file properly

@@ -2,8 +2,8 @@
 from direct.showbase.ShowBase import ShowBase
 
 # import our own repositories
-from ServerRepository import GameServerRepository
-from AIRepository import AIRepository
+from src.ServerRepository import GameServerRepository
+from src.AIRepository import AIRepository
 
 # initialize the engine
 base = ShowBase(windowType='none')

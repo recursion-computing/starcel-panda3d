@@ -3,7 +3,6 @@ from direct.interval.IntervalGlobal import *
 import uuid
 import sys
 
-# TODO: Rename to text object
 
 class SCell():  # Unfortunately, SCell cannot inherit from TextNode without using a pythonTag to store the ID of the class in the PandaNode, Ursina engine has solved this sub-classing problem, but it doesn't have PBR
     def __init__(self, most_recent_owner, text="=", pos=(0, 0, 0)):
@@ -12,7 +11,7 @@ class SCell():  # Unfortunately, SCell cannot inherit from TextNode without usin
         self.most_recent_owner.keyboard_capturer = KeyboardCapturer()
         self.most_recent_owner.stdout_handler = StdoutHandler()
         self.most_recent_owner.stdout_handler.start()
-        self.font = loader.loadFont("SourceCodePro-Bold.ttf", color=(1, 1, 1, 1), renderMode=TextFont.RMSolid, scaleFactor=23)
+        self.font = loader.loadFont("src/SourceCodePro-Bold.ttf", color=(1, 1, 1, 1), renderMode=TextFont.RMSolid, scaleFactor=23)
         self.uuid = str(uuid.uuid4())
         self.text = TextNode('Text' + self.uuid)
         self.text.setText(text)
@@ -26,21 +25,21 @@ class SCell():  # Unfortunately, SCell cannot inherit from TextNode without usin
         self.fromObject = self.textNode.attachNewNode(self.collision_node)
         # fromObject.show()
         self.fromObject.node().addSolid(CollisionBox(self.textNode.getTightBounds()[0] - self.textNode.getPos(),
-                                                self.textNode.getTightBounds()[1] - self.textNode.getPos()))
+                                                     self.textNode.getTightBounds()[1] - self.textNode.getPos()))
 
         self.box_extents = [self.textNode.getTightBounds()[0] - self.textNode.getPos(),
-                                                self.textNode.getTightBounds()[1] - self.textNode.getPos()]
+                            self.textNode.getTightBounds()[1] - self.textNode.getPos()]
 
         self.textNode.setHpr(self.most_recent_owner.drone.get_hpr())
 
-        self.cursor = Cursor(len(text),len(text),self)
+        self.cursor = Cursor(len(text), len(text), self)
 
 
 class Cursor:
     def __init__(self, start, end, parent_scell):
         self.parent_scell = parent_scell
         self.model = loader.loadModel("models/cursor4.bam")
-        self.model.set_scale(.05,.4,.4) # set x to .5 for full character width
+        self.model.set_scale(.05, .4, .4)  # set x to .5 for full character width
         # self.model.hide()
         self.model.reparent_to(parent_scell.textNode)
         self.location_start = 0
@@ -98,7 +97,6 @@ class Cursor:
 
         self.parent_scell.most_recent_owner.keyboard_capturer.clear_buffer()
 
-
     def spawn_corner_markers(self, pt1, pt2):
         model2 = loader.loadModel("models/coordinate2.bam")  # y and z are flipped
         model2.reparent_to(self.parent_scell.textNode)
@@ -119,6 +117,7 @@ class KeyboardCapturer:
         base.accept('keystroke', self.myFunc)
         self.buffer = ""
         self.active_scell = None
+
     def myFunc(self, keyname):
         self.buffer += keyname
         if self.active_scell is not None:
