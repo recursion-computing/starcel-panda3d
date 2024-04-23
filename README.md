@@ -48,20 +48,11 @@ I justify this python dialect as being a LISP dialect through these axioms ->
 Python eventually converges to PyPy which compiles entered python commands just-in-time -> 
 Python is written in C++ -> 
 C++ can be entirely translated to Turing machine move commands using https://github.com/xoreaxeaxeax/movfuscatorwhich -> 
-Turing machine move commands can be translated to binary lambda calculus -> 
-lambda calculus can be translated to the S K I syntax -> 
-lambda calculus is the SKI syntax -> 
+Turing machine move commands can be translated to binary lambda calculus ->
 all characters in this codebase are functions which are accounted for by my typing style. -> 
 I do not want to untangle that mess. -> 
 git -> 
-type-theory should be noted https://youtu.be/QRrcwahx-3s -> 
-https://youtu.be/gnrSedVucXs?si=XkWUuFU1954cHyeX ->
-
-
-hey bro want whats in my pocket 
-a little time shift 
-
-https://youtu.be/gnrSedVucXs?si=Au1NLNFjCmB6ey8C ->
+type-theory should be noted https://youtu.be/QRrcwahx-3s ->
 
 ### TODO and Planned Features
 *Most not listed here*

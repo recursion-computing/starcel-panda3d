@@ -74,7 +74,7 @@ class MainApp(ShowBase):  # Client
         from rpcore import RenderPipeline, SpotLight
         # from rpcore.util.movement_controller import MovementController
 
-        self.render_pipeline = RenderPipeline()
+        self.render_pipeline = RenderPipeline()  # z up coordinate system. couldn't change panda's coordinate system to z up left without shaders breaking
         self.render_pipeline.create(self)
         myfunctions.MyPythonCMDFuncs.renderpipeline = self.render_pipeline
         # self.render.set_shader_auto()

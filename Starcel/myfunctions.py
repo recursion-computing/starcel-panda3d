@@ -5,24 +5,7 @@ from panda3d.core import *  # LineStream
 # FOAM3 can interface with python files using mongodb and export into all other formats.
 # In other words, for example, you can create a new entry which only has the inputs and outputs entered, and not the function name; input:wood output:chair.
 # There is shared data between each function and new aliases can be quickly entered. The user doesn't have to learn new UI to change/shorten a command name.
-# TODO: Quickswap of blend to bam, hdri, and startup image
-
-    # cat=type $*
-    # rm=del $*
-    # mv=move $1 $2
-    # cp=copy $1 $2
-    # ps=tasklist $*
-    # kill=taskkill /f /im $*
-    # killall=taskkill /f /t /im $*
-    # poweroff=shutdown /s /t 0 /f
-    # reboot=shutdown /r /t 0 /f
-    # whereis=where $*
-    # grep=find /i $*
-    # ifconfig=ipconfig
-    # ll=dir /-b
-    # ga=git add .
-    # gc=git commit -a -m "$*"
-
+# map and reduce, and mapreduce were designed to quickly manage data, hadoop is an iteration on that, it is fast, apache spark is faster.
 
 class MyPythonCMDFuncs:
     def __init__(self):
