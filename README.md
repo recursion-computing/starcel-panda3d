@@ -9,10 +9,10 @@ A 3D Multiplayer Python IDE and Desktop Environment
 
 ### Included Python Libraries
 panda3d, [renderpipeline](https://github.com/tobspr/RenderPipeline),\
-black -> isort -> ssort -> ruff -> pyright-> pytest\
+black -> isort -> ssort -> ruff -> pyright-> pytest,\
 fast-autocomplete, rapidfuzz,\
 xarray, numpy, pandas, h5py, pytensor, cupy(awaiting update), cupy_xarray(awaiting update),\
-scipy, opencv, scikit-learn, sympy, mpmath, sagemath-standard, pymc, py4j, garamon\
+scipy, opencv, scikit-learn, sympy, mpmath, sagemath-standard, pymc, py4j, garamon,\
 astropy, pint, unyt, softposit, pendulum, more-itertools, plumbum, cmdix, dill, limeade, hy,\
 fastapi, uvicorn[standard],\
 datashader, bokeh, matplotlib, seaborn
@@ -21,7 +21,7 @@ datashader, bokeh, matplotlib, seaborn
 * Everything and ES CLI for quickly searching the Windows file system
 * FFmpeg for editing audio and video
 * dlp for downloading videos
-* WinPython: Not intended for use with StarcelPy - IDLE, IPython QT Console, Jupyter, Pyzo, QT, Spyder, VS Code
+* WinPython: Not intended for use with Starcel-Python - IDLE, IPython QT Console, Jupyter, Pyzo, QT, Spyder, VS Code
 
 ### How to run
 Run the program by executing ```python render_pipeline\Starcel\server.py``` and ```python render_pipeline\Starcel\client.py``` you can run as many clients as you want, but full replication of those clients and a full compiled release is currently a WIP. 
@@ -40,22 +40,44 @@ A major refactor is coming soon. I usually write a bunch of code until I get it 
 This project is entirely open source, so maybe you'll get to the refactor before I do. \
 Feel free to submit any pull request and I might adopt your changes. 
 
+#### Notes on language design
+This entire codebase and filenames are written as plaintext. -> 
+I consider my language a LISP. -> 
+This LISP dialect is also a custom python dialect. -> 
+I justify this python dialect as being a LISP dialect through these axioms -> 
+Python eventually converges to PyPy which compiles entered python commands just-in-time -> 
+Python is written in C++ -> 
+C++ can be entirely translated to Turing machine move commands using https://github.com/xoreaxeaxeax/movfuscatorwhich -> 
+Turing machine move commands can be translated to binary lambda calculus -> 
+lambda calculus can be translated to the S K I syntax -> 
+lambda calculus is the SKI syntax -> 
+all characters in this codebase are functions which are accounted for by my typing style. -> 
+I do not want to untangle that mess. -> 
+git -> 
+type-theory should be noted https://youtu.be/QRrcwahx-3s -> 
+https://youtu.be/gnrSedVucXs?si=XkWUuFU1954cHyeX ->
+
+
+hey bro want whats in my pocket 
+a little time shift 
+
+https://youtu.be/gnrSedVucXs?si=Au1NLNFjCmB6ey8C ->
+
 ### TODO and Planned Features
 *Most not listed here*
-File browser to replace windows explorer and nautilis
-Load desktop folder
-I recommend using thonny as a starting point for IDE development, tkinter is native to python
-implement multivariable replacement to quickly replace variable names in a function with a preset list of variables
-As inspiration for spreadsheet and table development, recall the starting point of a 2d spreadsheet exists in a slice of the octant of a 3d spreadsheet class object
-Add player alignment tools
-Add node dragging and alignment tools 
-Fix loading transparent models bug
-Implement https://sceditor.recursion.is menus
-Implement technical details from video
-Fix wysiwyg text editing
-Add everything search exe as a function and filter for apps and shortcuts
-Build exe and test python runtime to reshell windows
-Restructure and refactor code
+File browser to replace windows explorer and nautilis\
+Load desktop folder\
+Thonny as a starting point for IDE development, tkinter is native to python\
+implement multivariable replacement to quickly replace variable names in a function with a preset list of variables\
+As inspiration for spreadsheet and table development, recall the starting point of a 2d spreadsheet exists in a slice of the octant of a 3d spreadsheet class object\
+Add player alignment tools\
+Add node dragging and alignment tools\
+Fix loading transparent models bug\
+Implement https://sceditor.recursion.is menus\
+Implement technical details from video\
+Add everything search exe as a function and filter for apps and shortcuts\
+Build exe and test python runtime to reshell windows\
+Restructure and refactor code\
 Autoswap desktop background and startup image
 
 
@@ -68,18 +90,16 @@ C:\Panda3D-1.10.13-x64\bin
 
 I am bootstrapping this program as an IDE with the PyCharm IDE. You can fix the syntax highlighting by modifying the builtins file bundled with PyCharm. 
 <details>
-  <summary>Something like this, </summary>
-  <p>
-
-```
+<summary>Something like this, </summary>
+<p>
+<pre><code>
 from panda3d.core import NodePath, VirtualFileSystem
 from direct.showbase.ShowBase import ShowBase
 from direct.directnotify.DirectNotify import DirectNotify
 from direct.showbase.Messenger import Messenger
 from direct.task.Task import TaskManager
 from direct.showbase.Loader import Loader
-# There are some other builtins but their use is a lot more unusual so they aren't included here. 
-
+# There are some other builtins but their use is a lot more unusual so they aren't included here.
 base: ShowBase
 messenger: Messenger
 taskMgr: TaskManager
@@ -90,5 +110,6 @@ aspect2d: NodePath
 hidden: NodePath
 loader: Loader
 vfs: VirtualFileSystem
-```
-copied into ``pycharm_Install_Path/plugins/python/helpers/typeshed/stdlib/builtins.pyi``. 
+</code></pre>
+copied into <code>pycharm_Install_Path/plugins/python/helpers/typeshed/stdlib/builtins.pyi</code>
+</details>

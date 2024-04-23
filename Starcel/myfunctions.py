@@ -1,11 +1,27 @@
 import subprocess, sys, os, uuid
 from panda3d.core import *  # LineStream
 
-# TODO: Mirror these function titles and relevant information into a spreadsheet like aliasfunctions.csv because it has strictly optional input fields. See FOAM3 for an example.
-#  In other words, for example, you can create a new entry which only has the inputs and outputs entered, and not the function name; input:wood output:chair.
-#  There is shared data between each function and new aliases can be quickly entered. The user doesn't have to learn new UI to change/shorten a command name.
-# TODO: psutils rendering after building ndplot
+# TODO: Use FOAM3 to mirror these these function titles and relevant information into aliasfunctions(.csv) because it has strictly optional input fields.
+# FOAM3 can interface with python files using mongodb and export into all other formats.
+# In other words, for example, you can create a new entry which only has the inputs and outputs entered, and not the function name; input:wood output:chair.
+# There is shared data between each function and new aliases can be quickly entered. The user doesn't have to learn new UI to change/shorten a command name.
 # TODO: Quickswap of blend to bam, hdri, and startup image
+
+    # cat=type $*
+    # rm=del $*
+    # mv=move $1 $2
+    # cp=copy $1 $2
+    # ps=tasklist $*
+    # kill=taskkill /f /im $*
+    # killall=taskkill /f /t /im $*
+    # poweroff=shutdown /s /t 0 /f
+    # reboot=shutdown /r /t 0 /f
+    # whereis=where $*
+    # grep=find /i $*
+    # ifconfig=ipconfig
+    # ll=dir /-b
+    # ga=git add .
+    # gc=git commit -a -m "$*"
 
 
 class MyPythonCMDFuncs:
@@ -13,6 +29,15 @@ class MyPythonCMDFuncs:
         self.firstFrame = None
         self.recording_ready = True
         self.ffmpeg = None
+        self.absolute_pipeline_path = os.path.abspath("../../")
+
+    def set_background(self):
+        images_location = self.absolute_pipeline_path + "data\default_cubemap\source\\0.png"
+        print(subprocess.check_output(sys.executable + " " + self.absolute_pipeline_path + "data\generate_txo_files.py", shell=True, cwd=os.getcwd(), text=True))
+
+    def set_startup_image(self):
+        image_location = self.absolute_pipeline_path + "data\gui\loading_screen_bg.png"
+        print(subprocess.check_output(sys.executable + " " + self.absolute_pipeline_path + "data\generate_txo_files.py", shell=True, cwd=os.getcwd(), text=True))
 
     def scenegraph(self):  # The scene "print" function
         lsb = LineStream()
@@ -43,30 +68,16 @@ class MyPythonCMDFuncs:
         # True contradictions occur when two functions share the same name and are equally valid. No particular function can take precedence.
         pass
 
-    def auto_determine_undefined(self):  # This is the null pointer function. When any function is submitted and there is no valid function to call, send the undefined function as text to servers for analysis
+    def auto_determine_undefined(self):  # This is the null pointer function. When any function is submitted and there is no valid function to call, send the undefined function as text to Recursion servers for analysis
         pass
 
-    def ls(self, args):
-        if not args or args is None:
+    def ls(self, args=None):
+        print("ls called")
+        if args is None:
             print(subprocess.check_output("dir /b /ogn".split(" "), shell=True, cwd=os.getcwd(), text=True))
         else:
             print(subprocess.check_output("dir /b /ogn".split(" ").append(args), shell=True, cwd=os.getcwd(), text=True))
 
-    # cat=type $*
-    # rm=del $*
-    # mv=move $1 $2
-    # cp=copy $1 $2
-    # ps=tasklist $*
-    # kill=taskkill /f /im $*
-    # killall=taskkill /f /t /im $*
-    # poweroff=shutdown /s /t 0 /f
-    # reboot=shutdown /r /t 0 /f
-    # whereis=where $*
-    # grep=find /i $*
-    # ifconfig=ipconfig
-    # ll=dir /-b
-    # ga=git add .
-    # gc=git commit -a -m "$*"
     def man(self):
         print((subprocess.run(["help"], shell=True, capture_output=True, text=True).stdout))
 
@@ -85,12 +96,14 @@ class MyPythonCMDFuncs:
         print(os.getcwd())
 
     def python(self, input):
+        # print(subprocess.check_output(sys.executable + " " + input, shell=True, cwd=os.getcwd(), text=True))
         self.python = subprocess.Popen(
-            ["python.exe", input],
+            [sys.executable, input],
             stdin=subprocess.PIPE,
             bufsize=-1,
             shell=False,
         )
+
     def cmd(self, input):
         self.cmd = subprocess.Popen(
             ["cmd.exe", input],

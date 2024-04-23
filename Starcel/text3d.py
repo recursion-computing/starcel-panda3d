@@ -4,7 +4,11 @@ import uuid
 import sys
 
 
-class SCell():  # Unfortunately, SCell cannot inherit from TextNode without using a pythonTag to store the ID of the class in the PandaNode, Ursina engine has solved this sub-classing problem, but it doesn't have PBR
+class SCell():  # Parenthesis, because this is also a function
+    # Unless there is an update, SCell cannot inherit from TextNode without using a pythonTag to store the ID of the class in the PandaNode.
+    # pokepetter/ursina engine has solved this sub-classing problem, by storing the pythonID, but it does not work with any existing open source physically-based renderers.
+    # Lighting in ursina is done by baking the lighting where objects get lit in external programs from specific camera locations and textures are rendered to be used on the objects.
+    # The rendering and lighting in those external programs can be physically-based. To clarify, tobspr/RenderPipeline uses Deferred Realtime Rendering with Physically Based Shading.
     def __init__(self, most_recent_owner, text="=", pos=(0, 0, 0)):
         self.focused = False
         self.most_recent_owner = most_recent_owner
@@ -35,7 +39,7 @@ class SCell():  # Unfortunately, SCell cannot inherit from TextNode without usin
         self.cursor = Cursor(len(text), len(text), self)
 
 
-class Cursor:
+class Cursor():
     def __init__(self, start, end, parent_scell):
         self.parent_scell = parent_scell
         self.model = loader.loadModel("models/cursor4.bam")
@@ -56,12 +60,13 @@ class Cursor:
         self.max_characters_height = 1
         self.click_width = None
         self.click_height = None
-        # self.highlight = loader.loadModel("models/cursor2.glb") # TODO: Unsure how to import transparent models
+        self.highlight = loader.loadModel("models/cursor2.egg")  # the 3rd shading model defined in rp is 'TRANSPARENT'. The emitr scalar in a material defined in a .egg, emission.x, can be used to set the shading model
+        # self.highlight.set_shader('TRANSPARENT')
         # self.highlight.setTransparency(TransparencyAttrib.MAlpha)
         # self.highlight.setAlphaScale(0.5)
-        # self.highlight.set_scale(.5,.4,.4)  # set x to .5 for full character width
-        # self.parent_scell.most_recent_owner.render_pipeline.prepare_scene(self.highlight)
-        # self.highlight.reparent_to(self.parent_scell.textNode)
+        self.highlight.set_scale(.5,.4,.4)  # set x to .5 for full character width
+        self.parent_scell.most_recent_owner.render_pipeline.prepare_scene(self.highlight)
+        self.highlight.reparent_to(self.parent_scell.textNode)
 
     def update(self, start, end):
         self.location_start = start
@@ -111,7 +116,7 @@ class Cursor:
         model4.setHpr(self.parent_scell.textNode.get_hpr())
 
 
-class KeyboardCapturer:
+class KeyboardCapturer():
     def __init__(self):
         base.buttonThrowers[0].node().setKeystrokeEvent('keystroke')
         base.accept('keystroke', self.myFunc)
@@ -135,7 +140,7 @@ class KeyboardCapturer:
         self.buffer = ""
 
 
-class StdoutHandler:  # Used to capture stdout data printed to console
+class StdoutHandler():  # Used to capture stdout data printed to console
     def __init__(self):
         self.last_output = ""
 

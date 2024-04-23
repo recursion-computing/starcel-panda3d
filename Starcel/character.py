@@ -1,7 +1,7 @@
 from panda3d.core import ModifierButtons, Vec3, Point3, CurveFitter, Quat, NodePath
 from ndplot import FiniteRepetitionSelector
 from DistributedSmoothActor import DistributedSmoothActor
-
+# https://youtube.com/shorts/oOBkSnWk8LM
 
 class DroneController():
     def __init__(self, client_repository):
@@ -116,25 +116,26 @@ class DroneController():
         self.xrsdk.Reset()
 
     def ralt_down(self):
-        self.pre_reset_glasses_rotation = list(map(float, self.xrsdk.ReadArSensors().split(",")))
-        self.xrsdk.Reset()
-        current_glasses_rotation = list(map(float, self.xrsdk.ReadArSensors().split(",")))
-        self.current_glasses_rotation = Quat(current_glasses_rotation[3], current_glasses_rotation[0],
-                                              current_glasses_rotation[1], current_glasses_rotation[2])
+        if self.xrsdk is not None:
+            self.pre_reset_glasses_rotation = list(map(float, self.xrsdk.ReadArSensors().split(",")))
+            self.xrsdk.Reset()
+            current_glasses_rotation = list(map(float, self.xrsdk.ReadArSensors().split(",")))
+            self.current_glasses_rotation = Quat(current_glasses_rotation[3], current_glasses_rotation[0],
+                                                  current_glasses_rotation[1], current_glasses_rotation[2])
 
 
-        new_quat = self.unity_to_panda3d_quaternion(
-            Quat(current_glasses_rotation[0], current_glasses_rotation[1], current_glasses_rotation[2], current_glasses_rotation[3]))
-        flip_rotation = Quat()
-        flip_rotation.setFromAxisAngle(180, Vec3(0, 0, 1))
-        self.working_current_glasses_rotation = (flip_rotation * Quat(new_quat[3], new_quat[0], new_quat[1], new_quat[2]))
+            new_quat = self.unity_to_panda3d_quaternion(
+                Quat(current_glasses_rotation[0], current_glasses_rotation[1], current_glasses_rotation[2], current_glasses_rotation[3]))
+            flip_rotation = Quat()
+            flip_rotation.setFromAxisAngle(180, Vec3(0, 0, 1))
+            self.working_current_glasses_rotation = (flip_rotation * Quat(new_quat[3], new_quat[0], new_quat[1], new_quat[2]))
 
-        self.current_rotation = self.drone.get_quat()
-        self.current_camera_rotation = base.camera.get_quat()
-        #self.current_rotation = self.drone.get_hpr()
+            self.current_rotation = self.drone.get_quat()
+            self.current_camera_rotation = base.camera.get_quat()
+            #self.current_rotation = self.drone.get_hpr()
 
-        #base.camera.set_quat(self.current_glasses_rotation)
-        self.firstpersonlook_activated = True
+            #base.camera.set_quat(self.current_glasses_rotation)
+            self.firstpersonlook_activated = True
 
     def ralt_up(self):
         #base.camera.set_hpr(self.current_rotation)
@@ -336,8 +337,9 @@ class DroneController():
                     self.drone.show()
 
                 elif self.firstpersonlook_activated:
-                    gyro_values = list(map(float, self.xrsdk.ReadArSensors().split(",")))
-                    print(gyro_values)
+                    if self.xrsdk is not None:
+                        gyro_values = list(map(float, self.xrsdk.ReadArSensors().split(",")))
+                        print(gyro_values)
                     new_quat = self.unity_to_panda3d_quaternion(Quat(gyro_values[0], gyro_values[1], gyro_values[2], gyro_values[3]))
                     flip_rotation = Quat()
                     flip_rotation.setFromAxisAngle(180, Vec3(0, 0, 1))

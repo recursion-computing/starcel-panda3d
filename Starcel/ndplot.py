@@ -2,6 +2,7 @@ from p10ga_py import *
 import numpy as np
 from skimage.measure import marching_cubes
 
+# TODO: psutils rendering after building ndplot
 
 # In absence of order, consider repetition repeats
 class FiniteRepetitionSelector:
@@ -36,7 +37,7 @@ class FiniteRepetitionSelector:
         self.autonegate = False
 
     def autonegate_value(self, value):
-        if self.autonegate:  # can be used to complete circles within tolerance
+        if self.autonegate:  # can be used to complete circles within engineering-tolerance
             if self.autonegate_threshold > value > -1 * self.autonegate_threshold:
                 return -1 * value
         return value

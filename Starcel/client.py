@@ -24,14 +24,18 @@ import cmdix
 import subprocess
 import myfunctions
 
-import clr
-sys.path.append("C:\\Users\\xnick\\Documents\\Personal\\_git\\TCLRayneoAir2CLI\\bin\\Debug\\net7.0\\")
-clr.AddReference("TCLRayneoAir2CLI")
-# print(clr._available_namespaces)
-from FfalconXR import XRSDK  # syntax highlighter may not highlight errors
-myXRSDK = XRSDK()
-# print(dir(XRSDK))
-myXRSDK.XRSDK_Init()  # The purpose of this is to get the four quaternion values from the AR glasses.
+try:
+    import clr
+    sys.path.append("C:\\Users\\xnick\\Documents\\Personal\\_git\\TCLRayneoAir2CLI\\bin\\Debug\\net7.0\\")
+    clr.AddReference("TCLRayneoAir2CLI")
+    # print(clr._available_namespaces)
+    from FfalconXR import XRSDK  # syntax highlighter may not highlight errors
+    myXRSDK = XRSDK()
+    # print(dir(XRSDK))
+    myXRSDK.XRSDK_Init()  # The purpose of this is to get the four quaternion values from the AR glasses.
+except Exception as exception:
+    print("Cannot load XRSDK: ", exception)
+
 
 # Change to the current directory
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
@@ -43,16 +47,16 @@ global drone
 class MainApp(ShowBase):  # Client
     # Setup window size, title and so on
     load_prc_file_data("", """
-    win-size 1600 900
+    win-size 1920 1080
     window-title Starcel
     """)  # fullscreen #t # be sure to update window size when changing to fullscreen
 
     def __init__(self):
         # Collect all Words/Function/Command/Formula/Script/Action/Verb/Alias/Procedure/Algorithm Names
         def get_available_functions():
-            # load aliases from csv into xarray, xarray has netcdf format, which is built on hdf5 format.
-            # These are the best formats for storing and interfacing with multidimensional data
-            # TODO: Wrap API for xarray to be natural
+            # Load aliases from csv into xarray, xarray has netcdf format, which is built on hdf5 format.
+            # These are the best formats for storing and interfacing with multidimensional array data.
+            # TODO: Wrap API for xarray to be accessed like np.arrays and lists
             aliasfunctions = xr.DataArray(
                 np.loadtxt("aliasfunctions.csv",  # it is important to understand that no field is required to be filled out
                            delimiter=",", dtype=str))
@@ -72,6 +76,7 @@ class MainApp(ShowBase):  # Client
 
         self.render_pipeline = RenderPipeline()
         self.render_pipeline.create(self)
+        myfunctions.MyPythonCMDFuncs.renderpipeline = self.render_pipeline
         # self.render.set_shader_auto()
 
         # Set time of day
@@ -83,7 +88,10 @@ class MainApp(ShowBase):  # Client
             global drone
             drone = DroneController(client)
             drone.render_pipeline = self.render_pipeline
-            drone.xrsdk = myXRSDK
+            try:
+                drone.xrsdk = myXRSDK
+            except Exception as exception:
+                print(exception)
             drone.mouse_enabled = self.mouse_activated
             drone.setup()
 
@@ -138,7 +146,7 @@ class MainApp(ShowBase):  # Client
                 drone.update_mouse_offsets()
                 normal_mouse_mode()
 
-        def spawn_scell(pos, text="ls(None)"): # mypythoncmdfuncs.MyPythonCMDFuncs().desktop()
+        def spawn_scell(pos, text="ls(None)"):  # mypythoncmdfuncs.MyPythonCMDFuncs().desktop()
             global drone
             return SCell(drone,text=text,pos=pos)
 
@@ -224,7 +232,9 @@ class MainApp(ShowBase):  # Client
 
                 drone.stdout_handler.last_output = ""
                 input_text = self.current_scell.text.get_text()
+                print(input_text)
                 parsed = input_text.strip().split(' ')
+                print(parsed)
                 if parsed[0] == "cd":
                     if parsed[1] == "..":
                         os.chdir(os.path.dirname(os.getcwd()))
@@ -247,7 +257,7 @@ class MainApp(ShowBase):  # Client
                     # output = locals()
                 else:
                     try:
-                        # print("Executing of received statement: " + input_text.strip())
+                        print("Executing of received statement: " + input_text.strip())
                         output = exec(input_text.strip())  # Executing of received statement. Exec relies on the stdout print statements to receive output whereas eval would assign the output of the received statement
                         print(output)
                         # output = repr(self.stdout_handler.last_output)
@@ -313,7 +323,7 @@ class MainApp(ShowBase):  # Client
                         elif "RiceColNode" in pickedObj.getName():
                             os.startfile("C:\Program Files\Google\Chrome\Application\chrome.exe")
                         elif "IconColNode" in pickedObj.getName():
-                            os.startfile(mypythoncmdfuncs.allicons[pickedObj.getName()].url)
+                            os.startfile(myfunctions.allicons[pickedObj.getName()].url)
                         else:
                             self.win.getProperties().getForeground()
                             self.current_scell.most_recent_owner.keyboard_capturer.set_active_scell(None)
