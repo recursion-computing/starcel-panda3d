@@ -46,13 +46,11 @@ I consider my language a LISP. ->
 This LISP dialect is also a custom python dialect. -> 
 I justify this python dialect as being a LISP dialect through these axioms -> 
 Python eventually converges to PyPy which compiles entered python commands just-in-time -> 
-Python is written in C++ -> 
-C++ can be entirely translated to Turing machine move commands using https://github.com/xoreaxeaxeax/movfuscatorwhich -> 
+Python is written in C and C++ -> 
+C and C++ can be translated to Turing machine move commands -> 
 Turing machine move commands can be translated to binary lambda calculus ->
 all characters in this codebase are functions which are accounted for by my typing style. -> 
-I do not want to untangle that mess. -> 
 git -> 
-type-theory should be noted https://youtu.be/QRrcwahx-3s ->
 
 ### TODO and Planned Features
 *Most not listed here*
